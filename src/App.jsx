@@ -245,39 +245,44 @@ const AuthModal = ({ onClose, onLogin }) => {
 
         {/* REGISTER */}
         {mode === "register" && (
-          <>
-            <label>Username</label>
-            <input value={form.username} onChange={set("username")} />
+  <>
+    <label style={S.label}>Username</label>
+    <input style={S.input} value={form.username} onChange={set("username")} />
 
-            <label>Email</label>
-            <input value={form.email} onChange={set("email")} />
+    <label style={S.label}>Email</label>
+    <input style={S.input} value={form.email} onChange={set("email")} />
 
-            <label>Phone</label>
-            <input value={form.phone} onChange={set("phone")} />
-          </>
-        )}
+    <label style={S.label}>Phone Number</label>
+    <input style={S.input} value={form.phone} onChange={set("phone")} />
+  </>
+)}
 
-        {/* LOGIN */}
-        {mode === "login" && (
-          <>
-            <label>Email</label>
-            <input value={form.email} onChange={set("email")} />
-          </>
-        )}
+{mode === "login" && (
+  <>
+    <label style={S.label}>Email</label>
+    <input style={S.input} value={form.email} onChange={set("email")} />
+  </>
+)}
 
-        <label>Password</label>
-        <input type="password" value={form.password} onChange={set("password")} />
+<label style={S.label}>Password</label>
+<input
+  style={S.input}
+  type="password"
+  value={form.password}
+  onChange={set("password")}
+/>
 
-        {mode === "register" && (
-          <>
-            <label>Confirm Password</label>
-            <input
-              type="password"
-              value={form.confirmPassword}
-              onChange={set("confirmPassword")}
-            />
-          </>
-        )}
+{mode === "register" && (
+  <>
+    <label style={S.label}>Confirm Password</label>
+    <input
+      style={S.input}
+      type="password"
+      value={form.confirmPassword}
+      onChange={set("confirmPassword")}
+    />
+  </>
+)}
 
         {err && <p style={{ color: "red" }}>{err}</p>}
 
