@@ -173,149 +173,134 @@ const WaPickerModal = ({ carName, price, onClose }) => {
 };
 
 // ── AUTH MODAL ─────────────────────────────────────────────────────────────────
-const AuthModal = ({ onClose, onLogin, setShowTerms, setPendingUser }) => {
+const AuthModal = ({ onClose, onLogin }) => {
   const [mode, setMode] = useState("login");
-  
-  const [form, setForm] = useState({ username: "", email: "", phone: "", password: "", confirmPassword: "" });
-  const [err, setErr] = useState("");
-  
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-
-  console.log("Register button clicked");
-const handleRegister = async () => {
-  setErr("");
-
-  if (!form.username || !form.email || !form.phone || !form.password) {
-  return setErr("All fields are required.");
-}
-
-  if (form.password !== form.confirmPassword) {
-    return setErr("Passwords do not match");
-  }
-
-  // 🔐 Create user in Supabase Auth
- const { data, error } = await supabase.auth.signUp({
-  email: form.email,
-  password: form.password,
-}); 
-
-  if (error) return setErr(error.message);
-
-  // 💾 Save extra user data
-  const {error: insertError } = await supabase.from("users").insert([
-    {
-      id: data.user?.id,
-      username: form.username,
-      phone: form.phone,
-      is_admin: false,
-    },
-  ]);
-  if (insertError) return setErr(insertError.message);
-
-  alert("Account created! Now login.");
-};
-
-  const handleLogin = async () => {
-  setErr("");
-
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: form.username + "@carflix.com",
-    password: form.password,
+  const [form, setForm] = useState({
+    username: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
   });
+  const [err, setErr] = useState("");
 
-  if (error) return setErr(error.message);
+  const set = (k) => (e) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  // fetch user profile
-  const { data: profile } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", data.user.id)
-    .single();
+  // REGISTER
+  const handleRegister = async () => {
+    setErr("");
 
-  onLogin(profile);
-};
-const logout = async () => {
-  await supabase.auth.signOut();
-  setUser(null);
-  setSavedIds([]);
-  setTab("home");
-};
+    if (!form.username || !form.email || !form.phone || !form.password) {
+      return setErr("All fields are required.");
+    }
 
-  const acceptTerms = () => {
-    const users = db.getUsers();
-    users.push(pendingUser);
-    db.setUsers(users);
-    db.setCurrentUser(pendingUser);
-    setShowTerms(false);
-    onLogin(pendingUser);
+    if (form.password !== form.confirmPassword) {
+      return setErr("Passwords do not match");
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+      email: form.email,
+      password: form.password,
+    });
+
+    if (error) return setErr(error.message);
+
+    const { error: insertError } = await supabase.from("users").insert([
+      {
+        id: data.user?.id,
+        username: form.username,
+        phone: form.phone,
+        is_admin: false,
+      },
+    ]);
+
+    if (insertError) return setErr(insertError.message);
+
+    alert("Account created! Now login.");
+    setMode("login");
+  };
+
+  // LOGIN
+  const handleLogin = async () => {
+    setErr("");
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: form.email,
+      password: form.password,
+    });
+
+    if (error) return setErr(error.message);
+
+    onLogin(form.email, form.password);
   };
 
   return (
-    <>
-      
-      <div style={S.modalOverlay}>
-        <div style={S.modal}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-            <h2 style={{ ...S.modalTitle, margin: 0 }}>{mode === "login" ? "Sign In" : "Create Account"}</h2>
-            <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><Icon name="close" size={22} color="#555" /></button>
-          </div>
-          {mode === "register" && (
-  <>
-    <label style={S.label}>Username</label>
-    <input 
-      style={S.input} 
-      placeholder="Choose a username" 
-      value={form.username} 
-      onChange={set("username")} 
-    />
-
-    <label style={S.label}>Email</label>
-    <input 
-      style={S.input} 
-      placeholder="Enter your email" 
-      value={form.email || ""} 
-      onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} 
-    />
-
-    <label style={S.label}>Phone Number</label>
-    <input 
-      style={S.input} 
-      placeholder="e.g. 0700000000" 
-      value={form.phone} 
-      onChange={set("phone")} 
-    />
-  </>
-)}
-          {mode === "login" && (
-            <>
-              <label style={S.label}>Username</label>
-              <input style={S.input} placeholder="Your username" value={form.username} onChange={set("username")} />
-            </>
-          )}
-          <label style={S.label}>Password</label>
-          <input style={S.input} type="password" placeholder="Password" value={form.password} onChange={set("password")} />
-          {mode === "register" && (
-            <>
-              <label style={S.label}>Confirm Password</label>
-              <input style={S.input} type="password" placeholder="Confirm password" value={form.confirmPassword} onChange={set("confirmPassword")} />
-            </>
-          )}
-          {err && <p style={S.errorTxt}>{err}</p>}
-          <button style={S.primaryBtn} onClick={mode === "login" ? handleLogin : handleRegister}>
-            {mode === "login" ? "Sign In" : "Register"}
-          </button>
-          <p style={{ textAlign: "center", fontSize: 14, color: "#666", margin: 0 }}>
-            {mode === "login" ? "No account? " : "Already have one? "}
-            <span style={{ color: RED, fontWeight: 700, cursor: "pointer" }} onClick={() => { setMode(mode === "login" ? "register" : "login"); setErr(""); }}>
-              {mode === "login" ? "Register" : "Sign In"}
-            </span>
-          </p>
+    <div style={S.modalOverlay}>
+      <div style={S.modal}>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <h2>{mode === "login" ? "Sign In" : "Create Account"}</h2>
+          <button onClick={onClose}>X</button>
         </div>
+
+        {/* REGISTER */}
+        {mode === "register" && (
+          <>
+            <label>Username</label>
+            <input value={form.username} onChange={set("username")} />
+
+            <label>Email</label>
+            <input value={form.email} onChange={set("email")} />
+
+            <label>Phone</label>
+            <input value={form.phone} onChange={set("phone")} />
+          </>
+        )}
+
+        {/* LOGIN */}
+        {mode === "login" && (
+          <>
+            <label>Email</label>
+            <input value={form.email} onChange={set("email")} />
+          </>
+        )}
+
+        <label>Password</label>
+        <input type="password" value={form.password} onChange={set("password")} />
+
+        {mode === "register" && (
+          <>
+            <label>Confirm Password</label>
+            <input
+              type="password"
+              value={form.confirmPassword}
+              onChange={set("confirmPassword")}
+            />
+          </>
+        )}
+
+        {err && <p style={{ color: "red" }}>{err}</p>}
+
+        <button onClick={mode === "login" ? handleLogin : handleRegister}>
+          {mode === "login" ? "Sign In" : "Register"}
+        </button>
+
+        <p>
+          {mode === "login" ? "No account?" : "Already have one?"}
+          <span
+            style={{ color: "red", cursor: "pointer" }}
+            onClick={() => {
+              setMode(mode === "login" ? "register" : "login");
+              setErr("");
+            }}
+          >
+            {mode === "login" ? " Register" : " Sign In"}
+          </span>
+        </p>
       </div>
-    </>
+    </div>
   );
 };
-
 // ── CAR DETAIL PAGE ────────────────────────────────────────────────────────────
 const CarDetail = ({ car, user, onBack, savedIds, onToggleSave }) => {
   const [imgIdx, setImgIdx] = useState(0);
