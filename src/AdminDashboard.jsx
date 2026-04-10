@@ -142,189 +142,163 @@ export default function AdminDashboard({ user, cars, deleteCar }) {
             boxShadow: "0 4px 20px rgba(0,0,0,0.05)"
           }}
         >
-          <table style={{ width: "100%", borderSpacing: "0" }}>
-            
-            <thead>
-              <tr style={{ textAlign: "left", color: "#444", fontWeight: "700" }}>
-                <th style={{ padding: 10 }}>Car</th>
-                <th style={{ padding: 10 }}>Owner</th>
-                <th style={{ padding: 10 }}>Price</th>
-                <th style={{ padding: 10 }}>Status</th>
-                <th style={{ padding: 10 }}>Inquiries</th>
-                <th style={{ padding: 10 }}>Actions</th>
-              </tr>
-            </thead>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+  {filtered.map((car) => (
+    <div
+      key={car.id}
+      style={{
+        background: "#fff",
+        borderRadius: 14,
+        padding: 12,
+        boxShadow: "0 2px 10px rgba(0,0,0,0.08)"
+      }}
+    >
+              {/* TOP SECTION */}
+              <div style={{ display: "flex", gap: 10 }}>
+                {car.images && car.images[0] ? (
+                  <img
+                    src={car.images[0]}
+                    alt=""
+                    style={{
+                      width: 70,
+                      height: 60,
+                      borderRadius: 8,
+                      objectFit: "cover"
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 70,
+                      height: 60,
+                      background: "#EEE",
+                      borderRadius: 8,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 10,
+                      color: "#999"
+                    }}
+                  >
+                    No Img
+                  </div>
+                )}
 
-            <tbody>
-              {filtered.map((car) => (
-                <tr
-                  key={car.id}
-                  style={{
-                    background: "#fff",
-                    borderBottom: "1px solid #EEE",
-                    transition: "0.2s"
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.background = "#F9F9F9")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = "#fff")
-                  }
-                >
-                  
-                  {/* 🔥 CAR WITH IMAGE */}
-                  <td style={{ padding: 10 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      
-                      {car.images && car.images[0] ? (
-                        <img
-                          src={car.images[0]}
-                          alt=""
-                          style={{
-                            width: 50,
-                            height: 40,
-                            objectFit: "cover",
-                            borderRadius: 6,
-                            border: car.featured
-                              ? "2px solid gold"
-                              : "1px solid #EEE",
-                            transition: "0.2s"
-                          }}
-                          onMouseEnter={(e) =>
-                            (e.currentTarget.style.transform = "scale(1.05)")
-                          }
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.transform = "scale(1)")
-                          }
-                        />
-                      ) : (
-                        <div
-                          style={{
-                            width: 50,
-                            height: 40,
-                            background: "#EEE",
-                            borderRadius: 6,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: 10,
-                            color: "#999"
-                          }}
-                        >
-                          No Img
-                        </div>
-                      )}
-
-                      <span style={{ color: COLORS.text, fontWeight: 600 }}>
-                        {car.carName}
-                      </span>
-
-                    </div>
-                  </td>
-
-                  <td style={{ padding: 10, color: COLORS.text }}>
+                <div style={{ flex: 1 }}>
+                  <p style={{ margin: 0, fontWeight: 700, color: COLORS.text }}>
+                    {car.carName}
+                  </p>
+                  <p style={{ margin: "4px 0", color: COLORS.sub }}>
                     {getUsername(car.ownerId)}
-                  </td>
+                  </p>
+                  <p style={{ margin: 0, color: COLORS.text, fontWeight: 600 }}>
+                    UGX {car.price}
+                  </p>
+                </div>
+              </div>
 
-                  <td style={{ padding: 10, color: COLORS.text }}>
-                    {car.price}
-                  </td>
+              {/* STATUS + INFO */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginTop: 10,
+                  alignItems: "center"
+                }}
+              >
+                <span
+                  style={{
+                    background:
+                      car.status === "approved"
+                        ? "#E8F5E9"
+                        : car.status === "rejected"
+                        ? "#FFEBEE"
+                        : "#FFF8E1",
+                    color:
+                      car.status === "approved"
+                        ? "#2E7D32"
+                        : car.status === "rejected"
+                        ? "#C62828"
+                        : "#F9A825",
+                    padding: "4px 10px",
+                    borderRadius: 20,
+                    fontSize: 12,
+                    fontWeight: 700
+                  }}
+                >
+                  {car.status || "pending"}
+                </span>
 
-                  {/* STATUS */}
-                  <td style={{ padding: 10 }}>
-                    <span
-                      style={{
-                        background:
-                          car.status === "approved"
-                            ? "#E8F5E9"
-                            : car.status === "rejected"
-                            ? "#FFEBEE"
-                            : "#FFF8E1",
-                        color:
-                          car.status === "approved"
-                            ? "#2E7D32"
-                            : car.status === "rejected"
-                            ? "#C62828"
-                            : "#F9A825",
-                        padding: "4px 10px",
-                        borderRadius: 20,
-                        fontSize: 12,
-                        fontWeight: 700
-                      }}
-                    >
-                      {car.status || "pending"}
-                    </span>
-                  </td>
+                <span style={{ fontSize: 12, color: COLORS.sub }}>
+                  {contacts[car.id] || 0} inquiries
+                </span>
+              </div>
 
-                  <td style={{ padding: 10, color: COLORS.text }}>
-                    {contacts[car.id] || 0}
-                  </td>
+              {/* ACTION BUTTONS */}
+              <div style={{ display: "flex", gap: 6, marginTop: 12 }}>
+                <button
+                  onClick={() => updateStatus(car.id, "approved")}
+                  style={{
+                    flex: 1,
+                    background: "#E8F5E9",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: 10,
+                    cursor: "pointer"
+                  }}
+                >
+                  ✔ Approve
+                </button>
 
-                  {/* ACTIONS */}
-                  <td style={{ padding: 10, display: "flex", gap: 6 }}>
-                    
-                    <button
-                      onClick={() => updateStatus(car.id, "approved")}
-                      style={{
-                        background: "#E8F5E9",
-                        border: "none",
-                        borderRadius: 8,
-                        padding: 6,
-                        cursor: "pointer"
-                      }}
-                    >
-                      ✔
-                    </button>
+                <button
+                  onClick={() => updateStatus(car.id, "rejected")}
+                  style={{
+                    flex: 1,
+                    background: "#FFEBEE",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: 10,
+                    cursor: "pointer"
+                  }}
+                >
+                  ✖ Reject
+                </button>
+              </div>
 
-                    <button
-                      onClick={() => updateStatus(car.id, "rejected")}
-                      style={{
-                        background: "#FFEBEE",
-                        border: "none",
-                        borderRadius: 8,
-                        padding: 6,
-                        cursor: "pointer"
-                      }}
-                    >
-                      ✖
-                    </button>
+              <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                <button
+                  onClick={() => toggleFeature(car.id)}
+                  style={{
+                    flex: 1,
+                    background: car.featured ? "#FFD54F" : "#EEE",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: 10,
+                    cursor: "pointer",
+                    fontWeight: 700
+                  }}
+                >
+                  {car.featured ? "⭐ Featured" : "☆ Feature"}
+                </button>
 
-                    <button
-                      onClick={() => toggleFeature(car.id)}
-                      style={{
-                        background: car.featured
-                          ? "#FFD54F"
-                          : "#EEE",
-                        border: "none",
-                        borderRadius: 20,
-                        padding: "6px 10px",
-                        cursor: "pointer",
-                        fontWeight: 700
-                      }}
-                    >
-                      {car.featured ? "⭐" : "☆"}
-                    </button>
-
-                    <button
-                      onClick={() => deleteCar(car.id)}
-                      style={{
-                        background: "#FFEBEE",
-                        border: "none",
-                        borderRadius: 8,
-                        padding: 6,
-                        cursor: "pointer"
-                      }}
-                    >
-                      🗑
-                    </button>
-
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-
-          </table>
+                <button
+                  onClick={() => deleteCar(car.id)}
+                  style={{
+                    flex: 1,
+                    background: "#FFEBEE",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: 10,
+                    cursor: "pointer"
+                  }}
+                >
+                  🗑 Delete
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
+      </div>
 
         {/* ANALYTICS */}
         <div
