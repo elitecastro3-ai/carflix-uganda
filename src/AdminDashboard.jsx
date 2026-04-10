@@ -16,13 +16,21 @@ export default function AdminDashboard({ user, cars, deleteCar }) {
     JSON.parse(localStorage.getItem("contacts") || "{}")
   );
   console.log("USER:",user) 
-  if (!user || !user.isAdmin) {
-    return (
-      <h2 style={{ textAlign: "center", marginTop: 40 }}>
-        Access Denied 🚫
-      </h2>
-    );
-  }
+  if (user === null) {
+  return (
+    <h2 style={{ textAlign: "center", marginTop: 40 }}>
+      Loading...
+    </h2>
+  );
+}
+
+if (!user?.is_admin) {
+  return (
+    <h2 style={{ textAlign: "center", marginTop: 40 }}>
+      Access Denied 🚫
+    </h2>
+  );
+}
 
   const users = JSON.parse(localStorage.getItem("cf_users") || "[]");
 
