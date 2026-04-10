@@ -543,6 +543,8 @@ export default function CarFlixApp() {
         .eq("id", data.user.id)
         .single();
 
+        console.log("FETCHED PROFILE", profile);
+
       setUser(profile);
     }
   };

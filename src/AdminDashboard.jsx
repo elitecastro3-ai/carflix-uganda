@@ -15,7 +15,7 @@ export default function AdminDashboard({ user, cars, deleteCar }) {
   const [contacts] = useState(
     JSON.parse(localStorage.getItem("contacts") || "{}")
   );
-
+  console.log("USER:",user) 
   if (!user || !user.isAdmin) {
     return (
       <h2 style={{ textAlign: "center", marginTop: 40 }}>
