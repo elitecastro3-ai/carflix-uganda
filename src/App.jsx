@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AdminDashboard from "./AdminDashboard";
+import { supabase } from "./supabase";
 // ── MOCK DATA ──────────────────────────────────────────────────────────────────
 const MOCK_CARS = [
   { id: "1", carName: "Noah", brand: "Toyota", price: 45000000, location: "Nakawa", condition: "Used", description: "Well maintained Toyota Noah, 7-seater, fuel efficient. Excellent condition for family use.", images: ["https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=400&q=80"], ownerId: "u1", badge: "New", featured: false },
@@ -24,16 +25,7 @@ const WA_NUMBERS = [
 const formatPrice = (p) => "UGX " + p.toLocaleString();
 
 // ── FIREBASE SIMULATION (localStorage) ────────────────────────────────────────
-const db = {
-  getUsers: () => JSON.parse(localStorage.getItem("cf_users") || "[]"),
-  setUsers: (u) => localStorage.setItem("cf_users", JSON.stringify(u)),
-  getCars: () => JSON.parse(localStorage.getItem("cf_cars") || JSON.stringify(MOCK_CARS)),
-  setCars: (c) => localStorage.setItem("cf_cars", JSON.stringify(c)),
-  getSaved: (uid) => JSON.parse(localStorage.getItem("cf_saved_" + uid) || "[]"),
-  setSaved: (uid, s) => localStorage.setItem("cf_saved_" + uid, JSON.stringify(s)),
-  getCurrentUser: () => JSON.parse(localStorage.getItem("cf_current") || "null"),
-  setCurrentUser: (u) => localStorage.setItem("cf_current", JSON.stringify(u)),
-};
+6
 
 // ── ICONS ──────────────────────────────────────────────────────────────────────
 const Icon = ({ name, size = 20, color = "currentColor" }) => {
@@ -190,25 +182,63 @@ const AuthModal = ({ onClose, onLogin, setShowTerms, setPendingUser }) => {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   console.log("Register button clicked");
-  const handleRegister = () => {
-    setErr("");
-    if (!form.username || !form.phone || !form.password) return setErr("All fields are required.");
-    if (form.password !== form.confirmPassword) return setErr("Passwords do not match.");
-    if (form.phone.length < 9) return setErr("Enter a valid phone number.");
-    const users = db.getUsers();
-    if (users.find((u) => u.username === form.username)) return setErr("Username already taken.");
-    setPendingUser({ id: "u" + Date.now(), username: form.username, phone: form.phone, password: form.password, isAdmin: "admin"  });
-    setShowTerms(true);
-  };
+const handleRegister = async () => {
+  setErr("");
 
-  const handleLogin = () => {
-    setErr("");
-    const users = db.getUsers();
-    const u = users.find((u) => u.username === form.username && u.password === form.password);
-    if (!u) return setErr("Invalid username or password.");
-    db.setCurrentUser(u);
-    onLogin(u);
-  };
+  if (!form.username || !form.phone || !form.password) {
+    return setErr("All fields required");
+  }
+
+  if (form.password !== form.confirmPassword) {
+    return setErr("Passwords do not match");
+  }
+
+  // 🔐 Create user in Supabase Auth
+  const { data, error } = await supabase.auth.signUp({
+    email: form.username + "@carflix.com",
+    password: form.password,
+  });
+
+  if (error) return setErr(error.message);
+
+  // 💾 Save extra user data
+  await supabase.from("users").insert([
+    {
+      id: data.user.id,
+      username: form.username,
+      phone: form.phone,
+      is_admin: false,
+    },
+  ]);
+
+  alert("Account created! Now login.");
+};
+
+  const handleLogin = async () => {
+  setErr("");
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: form.username + "@carflix.com",
+    password: form.password,
+  });
+
+  if (error) return setErr(error.message);
+
+  // fetch user profile
+  const { data: profile } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", data.user.id)
+    .single();
+
+  onLogin(profile);
+};
+const logout = async () => {
+  await supabase.auth.signOut();
+  setUser(null);
+  setSavedIds([]);
+  setTab("home");
+};
 
   const acceptTerms = () => {
     const users = db.getUsers();
@@ -349,18 +379,53 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
     e.target.value = "";
   };
   const removeImg = (i) => setForm((f) => ({ ...f, images: f.images.filter((_, idx) => idx !== i) }));
-  const save = () => {
-    if (!form.carName || !form.price || !form.location || !form.description) return setErr("Please fill all required fields.");
-    const cars = db.getCars();
-    if (carToEdit) {
-      const idx = cars.findIndex((c) => c.id === carToEdit.id);
-      if (idx >= 0) cars[idx] = { ...form, price: Number(form.price) };
-    } else {
-      cars.unshift({ ...form, id: "c" + Date.now(), price: Number(form.price), ownerId: user.id, badge: "New", featured: false });
-    }
-    db.setCars(cars);
-    onSave();
-  };
+ const save = async () => {
+  setErr("");
+
+  if (!form.carName || !form.price || !form.location || !form.description) {
+    return setErr("Please fill all required fields.");
+  }
+
+  // EDIT CAR
+  if (carToEdit) {
+    const { error } = await supabase
+      .from("cars")
+      .update({
+        carName: form.carName,
+        brand: form.brand,
+        price: Number(form.price),
+        location: form.location,
+        condition: form.condition,
+        description: form.description,
+        images: form.images,
+      })
+      .eq("id", carToEdit.id);
+
+    if (error) return setErr(error.message);
+  }
+
+  // NEW CAR
+  else {
+    const { error } = await supabase.from("cars").insert([
+      {
+        carName: form.carName,
+        brand: form.brand,
+        price: Number(form.price),
+        location: form.location,
+        condition: form.condition,
+        description: form.description,
+        images: form.images,
+        owner_id: user.id,
+        featured: false,
+      },
+    ]);
+
+    if (error) return setErr(error.message);
+  }
+
+  onSave();
+};
+    
   return (
     <div style={S.modalOverlay}>
       <div style={{ ...S.modal, maxHeight: "90vh" }}>
@@ -440,17 +505,18 @@ const FilterPanel = ({ filters, onChange, onClose }) => {
 export default function CarFlixApp() {
   const [showTerms, setShowTerms] = useState(false);
   const [pendingUser, setPendingUser] = useState(null)
-  const [user, setUser] = useState(db.getCurrentUser());
+  const [user, setUser] = useState(null);
   console.log("CURRENT USER:", user);
   const [showAuth, setShowAuth] = useState(false);
   const [tab, setTab] = useState("home");
-  const [cars, setCars] = useState(db.getCars());
-  const deleteCar = (id) => {
-  const updated = cars.filter(c => c.id !== id);
-  db.setCars(updated);
-  setCars(updated);
+  const [cars, setCars] = useState([]);
+ const deleteCar = async (id) => {
+  await supabase.from("cars").delete().eq("id", id);
+
+  setCars((prev) => prev.filter((c) => c.id !== id));
 };
-  const [savedIds, setSavedIds] = useState(user ? db.getSaved(user.id) : []);
+  
+  const [savedIds, setSavedIds] = useState([]);
   const [search, setSearch] = useState("");
   const [brandFilter, setBrandFilter] = useState("All");
   const [filters, setFilters] = useState({ brand: "All", condition: "Any Condition", location: "", minPrice: "", maxPrice: "" });
@@ -461,11 +527,38 @@ export default function CarFlixApp() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [showWaPicker, setShowWaPicker] = useState(false);
   const [waCarContext, setWaCarContext] = useState(null);
+  useEffect(() => {
+  const getUser = async () => {
+    const { data } = await supabase.auth.getUser();
+
+    if (data?.user) {
+      const { data: profile } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", data.user.id)
+        .single();
+
+      setUser(profile);
+    }
+  };
+
+  getUser();
+}, []);
+useEffect(() => {
+  const fetchCars = async () => {
+    const { data } = await supabase.from("cars").select("*");
+    setCars(data || []);
+  };
+
+  fetchCars();
+}, []);
 
   const openWa = (car = null) => { setWaCarContext(car); setShowWaPicker(true); };
 
-  const refresh = () => setCars(db.getCars());
-
+const refresh = async () => {
+  const { data } = await supabase.from("cars").select("*");
+  setCars(data || []);
+};
   const toggleSave = (id) => {
     if (!user) return setShowAuth(true);
     const s = savedIds.includes(id) ? savedIds.filter(x => x !== id) : [...savedIds, id];
@@ -473,16 +566,22 @@ export default function CarFlixApp() {
     db.setSaved(user.id, s);
   };
 
-  const login = (u) => { setUser(u); setSavedIds(db.getSaved(u.id)); setShowAuth(false); };
-  const logout = () => { db.setCurrentUser(null); setUser(null); setSavedIds([]); setTab("home"); };
-  const acceptTerms = () => {
-  const users = db.getUsers();
-  users.push(pendingUser);
-  db.setUsers(users);
-  db.setCurrentUser(pendingUser);
-  setUser(pendingUser);
-  setSavedIds([]);
-  setShowTerms(false);
+  const login = async (username, password) => {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: username + "@carflix.com",
+    password,
+  });
+
+  if (error) return alert(error.message);
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", data.user.id)
+    .single();
+
+  setUser(profile);
+  setShowAuth(false);
 };
 
   const filtered = cars.filter(c => {
@@ -498,8 +597,7 @@ export default function CarFlixApp() {
   });
 
   const savedCars = cars.filter(c => savedIds.includes(c.id));
-  const myCars = user ? cars.filter(c => c.ownerId === user.id) : [];
-
+  const myCars = user ? cars.filter(c => c.owner_id === user.id) : [];
   if (selectedCar) return <CarDetail car={selectedCar} user={user} onBack={() => setSelectedCar(null)} savedIds={savedIds} onToggleSave={toggleSave} />;
 
   const CarCard = ({ car }) => (
