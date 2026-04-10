@@ -176,7 +176,7 @@ const WaPickerModal = ({ carName, price, onClose }) => {
 const AuthModal = ({ onClose, onLogin, setShowTerms, setPendingUser }) => {
   const [mode, setMode] = useState("login");
   
-  const [form, setForm] = useState({ username: "", phone: "", password: "", confirmPassword: "" });
+  const [form, setForm] = useState({ username: "", email: "", phone: "", password: "", confirmPassword: "" });
   const [err, setErr] = useState("");
   
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -185,31 +185,32 @@ const AuthModal = ({ onClose, onLogin, setShowTerms, setPendingUser }) => {
 const handleRegister = async () => {
   setErr("");
 
-  if (!form.username || !form.phone || !form.password) {
-    return setErr("All fields required");
-  }
+  if (!form.username || !form.email || !form.phone || !form.password) {
+  return setErr("All fields are required.");
+}
 
   if (form.password !== form.confirmPassword) {
     return setErr("Passwords do not match");
   }
 
   // 🔐 Create user in Supabase Auth
-  const { data, error } = await supabase.auth.signUp({
-    email: form.username + "@carflix.com",
-    password: form.password,
-  });
+ const { data, error } = await supabase.auth.signUp({
+  email: form.email,
+  password: form.password,
+}); 
 
   if (error) return setErr(error.message);
 
   // 💾 Save extra user data
-  await supabase.from("users").insert([
+  const {error: insertError } = await supabase.from("users").insert([
     {
-      id: data.user.id,
+      id: data.user?.id,
       username: form.username,
       phone: form.phone,
       is_admin: false,
     },
   ]);
+  if (insertError) return setErr(insertError.message);
 
   alert("Account created! Now login.");
 };
@@ -259,13 +260,32 @@ const logout = async () => {
             <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><Icon name="close" size={22} color="#555" /></button>
           </div>
           {mode === "register" && (
-            <>
-              <label style={S.label}>Username</label>
-              <input style={S.input} placeholder="Choose a username" value={form.username} onChange={set("username")} />
-              <label style={S.label}>Phone Number</label>
-              <input style={S.input} placeholder="e.g. 0700000000" value={form.phone} onChange={set("phone")} />
-            </>
-          )}
+  <>
+    <label style={S.label}>Username</label>
+    <input 
+      style={S.input} 
+      placeholder="Choose a username" 
+      value={form.username} 
+      onChange={set("username")} 
+    />
+
+    <label style={S.label}>Email</label>
+    <input 
+      style={S.input} 
+      placeholder="Enter your email" 
+      value={form.email || ""} 
+      onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} 
+    />
+
+    <label style={S.label}>Phone Number</label>
+    <input 
+      style={S.input} 
+      placeholder="e.g. 0700000000" 
+      value={form.phone} 
+      onChange={set("phone")} 
+    />
+  </>
+)}
           {mode === "login" && (
             <>
               <label style={S.label}>Username</label>
