@@ -183,19 +183,32 @@ const AuthModal = ({ onClose, onLogin }) => {
     confirmPassword: "",
   });
   const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const set = (k) => (e) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
+  // 🔥 Auto-fill last email
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("lastEmail");
+    if (savedEmail) {
+      setForm((f) => ({ ...f, email: savedEmail }));
+    }
+  }, []);
+
   // REGISTER
   const handleRegister = async () => {
     setErr("");
+    setLoading(true);
 
     if (!form.username || !form.email || !form.phone || !form.password) {
+      setLoading(false);
       return setErr("All fields are required.");
     }
 
     if (form.password !== form.confirmPassword) {
+      setLoading(false);
       return setErr("Passwords do not match");
     }
 
@@ -204,7 +217,10 @@ const AuthModal = ({ onClose, onLogin }) => {
       password: form.password,
     });
 
-    if (error) return setErr(error.message);
+    if (error) {
+      setLoading(false);
+      return setErr(error.message);
+    }
 
     const { error: insertError } = await supabase.from("users").insert([
       {
@@ -215,8 +231,14 @@ const AuthModal = ({ onClose, onLogin }) => {
       },
     ]);
 
-    if (insertError) return setErr(insertError.message);
+    if (insertError) {
+      setLoading(false);
+      return setErr(insertError.message);
+    }
 
+    localStorage.setItem("lastEmail", form.email);
+
+    setLoading(false);
     alert("Account created! Now login.");
     setMode("login");
   };
@@ -224,15 +246,22 @@ const AuthModal = ({ onClose, onLogin }) => {
   // LOGIN
   const handleLogin = async () => {
     setErr("");
+    setLoading(true);
 
     const { error } = await supabase.auth.signInWithPassword({
       email: form.email,
       password: form.password,
     });
 
-    if (error) return setErr(error.message);
+    if (error) {
+      setLoading(false);
+      return setErr(error.message);
+    }
+
+    localStorage.setItem("lastEmail", form.email);
 
     onLogin(form.email, form.password);
+    setLoading(false);
   };
 
   return (
@@ -245,51 +274,87 @@ const AuthModal = ({ onClose, onLogin }) => {
 
         {/* REGISTER */}
         {mode === "register" && (
-  <>
-    <label style={S.label}>Username</label>
-    <input style={S.input} value={form.username} onChange={set("username")} />
+          <>
+            <label style={S.label}>Username</label>
+            <input style={S.input} value={form.username} onChange={set("username")} />
 
-    <label style={S.label}>Email</label>
-    <input style={S.input} value={form.email} onChange={set("email")} />
+            <label style={S.label}>Email</label>
+            <input style={S.input} value={form.email} onChange={set("email")} />
 
-    <label style={S.label}>Phone Number</label>
-    <input style={S.input} value={form.phone} onChange={set("phone")} />
-  </>
-)}
+            <label style={S.label}>Phone Number</label>
+            <input style={S.input} value={form.phone} onChange={set("phone")} />
+          </>
+        )}
 
-{mode === "login" && (
-  <>
-    <label style={S.label}>Email</label>
-    <input style={S.input} value={form.email} onChange={set("email")} />
-  </>
-)}
+        {/* LOGIN */}
+        {mode === "login" && (
+          <>
+            <label style={S.label}>Email</label>
+            <input style={S.input} value={form.email} onChange={set("email")} />
+          </>
+        )}
 
-<label style={S.label}>Password</label>
-<input
-  style={S.input}
-  type="password"
-  value={form.password}
-  onChange={set("password")}
-/>
+        {/* PASSWORD */}
+        <label style={S.label}>Password</label>
+        <div style={{ position: "relative" }}>
+          <input
+            style={S.input}
+            type={showPassword ? "text" : "password"}
+            value={form.password}
+            onChange={set("password")}
+          />
+          <span
+            onClick={() => setShowPassword(!showPassword)}
+            style={{
+              position: "absolute",
+              right: 10,
+              top: "50%",
+              transform: "translateY(-50%)",
+              cursor: "pointer",
+              fontSize: 12,
+              color: "#777",
+            }}
+          >
+            {showPassword ? "Hide" : "Show"}
+          </span>
+        </div>
 
-{mode === "register" && (
-  <>
-    <label style={S.label}>Confirm Password</label>
-    <input
-      style={S.input}
-      type="password"
-      value={form.confirmPassword}
-      onChange={set("confirmPassword")}
-    />
-  </>
-)}
+        {/* CONFIRM PASSWORD */}
+        {mode === "register" && (
+          <>
+            <label style={S.label}>Confirm Password</label>
+            <input
+              style={S.input}
+              type="password"
+              value={form.confirmPassword}
+              onChange={set("confirmPassword")}
+            />
+          </>
+        )}
 
+        {/* ERROR */}
         {err && <p style={{ color: "red" }}>{err}</p>}
 
-        <button onClick={mode === "login" ? handleLogin : handleRegister}>
-          {mode === "login" ? "Sign In" : "Register"}
+        {/* BUTTON */}
+        <button
+          style={{
+            ...S.primaryBtn,
+            opacity: loading ? 0.7 : 1,
+            cursor: loading ? "not-allowed" : "pointer",
+          }}
+          disabled={loading || !form.email || !form.password}
+          onClick={mode === "login" ? handleLogin : handleRegister}
+        >
+          {loading
+            ? mode === "login"
+              ? "Signing in..."
+              : "Creating account..."
+            : mode === "login"
+            ? "Sign In"
+            : "Register"}
         </button>
 
+        {/* SWITCH MODE */}
         <p>
           {mode === "login" ? "No account?" : "Already have one?"}
           <span
@@ -578,11 +643,24 @@ const refresh = async () => {
     db.setSaved(user.id, s);
   };
 
-  const login = async (username, password) => {
+  const login = async (email, password) => {
   const { data, error } = await supabase.auth.signInWithPassword({
-    email: username + "@carflix.com",
+    email,
     password,
   });
+
+  if (error) return alert(error.message);
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", data.user.id)
+    .single();
+
+  setUser(profile);
+
+  setShowAuth(false); // ✅ closes modal
+};
 
   if (error) return alert(error.message);
 
