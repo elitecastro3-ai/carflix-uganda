@@ -76,9 +76,13 @@ const S = {
   headerIcons: { display: "flex", gap: 12, alignItems: "center" },
   iconBtn: { background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, padding: 8, cursor: "pointer", display: "flex", color: WHITE },
   searchBar: { background: RED_DARK, padding: "12px 16px 16px" },
-  searchRow: { display: "flex", gap: 8 },
+  searchRow: {
+  display: "flex",
+  gap: 8,
+  alignItems: "center",
+},
   searchInput: {
-  width: "100%",
+  
   padding: "12px 12px 12px 40px",
   borderRadius: 10,
   border: "1px solid #E0E0E0",
@@ -88,7 +92,7 @@ const S = {
   color: "#1A1A1A",      // visible text
   background: "#FFFFFF", // clean background
 },
-  searchBtn: { background: RED_LIGHT, color: WHITE, border: "none", borderRadius: 10, padding: "10px 18px", fontWeight: 700, fontSize: 14, cursor: "pointer" },
+  searchBtn: { background: RED_LIGHT, color: WHITE, border: "none", borderRadius: 10, padding: "10px 18px", fontWeight: 700, fontSize: 14, cursor: "pointer", flexShrink: 0, },
   filterRow: { display: "flex", gap: 8, marginTop: 10, overflowX: "auto", paddingBottom: 2 },
   filterChip: (active) => ({ background: active ? WHITE : "rgba(255,255,255,0.18)", color: active ? RED : WHITE, border: active ? "none" : "1.5px solid rgba(255,255,255,0.4)", borderRadius: 20, padding: "6px 14px", fontSize: 13, fontWeight: active ? 700 : 500, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }),
   section: { padding: "14px 16px 0" },
@@ -763,7 +767,7 @@ return (
                                 {/* SEARCH */}
                                 <div style={S.searchBar}>
                                   <div style={S.searchRow}>
-                                    <div style={{ position: "relative", flex: 1 }}>
+                                    <div style={{ position: "relative", flex: 1, minWidith: 0 }}>
                                       <div style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}><Icon name="search" size={18} color="#AAA" /></div>
                                       <input style={S.searchInput} placeholder="Search cars, price, or location..." value={search} onChange={e => setSearch(e.target.value)} />
                                     </div>
