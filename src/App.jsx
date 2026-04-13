@@ -647,7 +647,7 @@ const refresh = async () => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
-    });
+  });
 
   if (error) return alert(error.message);
 
@@ -660,6 +660,15 @@ const refresh = async () => {
   setUser(profile);
 
   setShowAuth(false); // ✅ closes modal
+};
+const logout = async () => {
+  await supabase.auth.signOut();
+  setUser(null);
+  setSavedIds([]);
+  setTab("home");
+};
+const acceptTerms = () => {
+  setShowTerms(false);
 };
 
   
