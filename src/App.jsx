@@ -77,7 +77,17 @@ const S = {
   iconBtn: { background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, padding: 8, cursor: "pointer", display: "flex", color: WHITE },
   searchBar: { background: RED_DARK, padding: "12px 16px 16px" },
   searchRow: { display: "flex", gap: 8 },
-  searchInput: { flex: 1, padding: "10px 14px 10px 40px", borderRadius: 10, border: "none", fontSize: 14, background: WHITE, outline: "none" },
+  searchInput: {
+  width: "100%",
+  padding: "12px 12px 12px 40px",
+  borderRadius: 10,
+  border: "1px solid #E0E0E0",
+  outline: "none",
+
+  // 🔥 FIXES
+  color: "#1A1A1A",      // visible text
+  background: "#FFFFFF", // clean background
+},
   searchBtn: { background: RED_LIGHT, color: WHITE, border: "none", borderRadius: 10, padding: "10px 18px", fontWeight: 700, fontSize: 14, cursor: "pointer" },
   filterRow: { display: "flex", gap: 8, marginTop: 10, overflowX: "auto", paddingBottom: 2 },
   filterChip: (active) => ({ background: active ? WHITE : "rgba(255,255,255,0.18)", color: active ? RED : WHITE, border: active ? "none" : "1.5px solid rgba(255,255,255,0.4)", borderRadius: 20, padding: "6px 14px", fontSize: 13, fontWeight: active ? 700 : 500, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }),
