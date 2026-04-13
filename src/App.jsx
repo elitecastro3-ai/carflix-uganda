@@ -126,7 +126,7 @@ const S = {
   errorTxt: { color: RED, fontSize: 12, marginBottom: 8 },
   successTxt: { color: "#2E7D32", fontSize: 12, marginBottom: 8 },
   pill: (on) => ({ display: "inline-flex", alignItems: "center", gap: 4, background: on ? "#FFEBEE" : "#F5F5F5", color: on ? RED : "#666", borderRadius: 20, padding: "4px 10px", fontSize: 12, fontWeight: 600 }),
-  postFab: { position: "fixed", bottom: 90, right: "calc(50% - 220px)", background: RED, color: WHITE, border: "none", borderRadius: 50, width: 52, height: 52, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 16px rgba(183,28,28,0.5)", zIndex: 300 },
+  postFab: { position: "fixed", bottom: 90, right: 16, background: RED, color: WHITE, border: "none", borderRadius: 50, width: 52, height: 52, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 16px rgba(183,28,28,0.5)", zIndex: 300 },
 };
 
 // ── TERMS & CONDITIONS ─────────────────────────────────────────────────────────
