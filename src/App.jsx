@@ -578,6 +578,9 @@ const FilterPanel = ({ filters, onChange, onClose }) => {
 
 // ── MAIN APP ───────────────────────────────────────────────────────────────────
 export default function CarFlixApp() {
+  window.onerror = function (msg, url, line, col, error) {
+  alert("ERROR: " + msg);
+};
   const [showTerms, setShowTerms] = useState(false);
   const [pendingUser, setPendingUser] = useState(null)
   const [user, setUser] = useState(null);
@@ -640,7 +643,7 @@ const refresh = async () => {
     if (!user) return setShowAuth(true);
     const s = savedIds.includes(id) ? savedIds.filter(x => x !== id) : [...savedIds, id];
     setSavedIds(s);
-    db.setSaved(user.id, s);
+    localStorage.setItem("saved_" + user.id, JSON.stringify(s));
   };
 
   const login = async (email, password) => {
