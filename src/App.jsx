@@ -462,11 +462,39 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
   const [form, setForm] = useState(carToEdit || { carName: "", brand: "Toyota", price: "", location: "", condition: "Used", description: "", images: [] });
   const [err, setErr] = useState("");
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  const handleImgUrl = (e) => {
-    const url = e.target.value.trim();
-    if (url && form.images.length < 7) setForm((f) => ({ ...f, images: [...f.images, url] }));
-    e.target.value = "";
-  };
+  const handleImageUpload = async (e) => {
+  const files = Array.from(e.target.files);
+
+  if (form.images.length + files.length > 7) {
+    return setErr("Maximum 7 images allowed");
+  }
+
+  let uploadedUrls = [];
+
+  for (let file of files) {
+    const fileName = `${Date.now()}-${file.name}`;
+
+    const { error } = await supabase.storage
+      .from("cars")
+      .upload(fileName, file);
+
+    if (error) {
+      console.error(error);
+      return setErr("Upload failed: " + error.message);
+    }
+
+    const { data } = supabase.storage
+      .from("cars")
+      .getPublicUrl(fileName);
+
+    uploadedUrls.push(data.publicUrl);
+  }
+
+  setForm((f) => ({
+    ...f,
+    images: [...f.images, ...uploadedUrls],
+  }));
+};
   const removeImg = (i) => setForm((f) => ({ ...f, images: f.images.filter((_, idx) => idx !== i) }));
  const save = async () => {
   setErr("");
@@ -539,7 +567,13 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
         <label style={S.label}>Description *</label>
         <textarea style={S.textarea} placeholder="Describe the car..." value={form.description} onChange={set("description")} />
         <label style={S.label}>Images (paste URL, max 7)</label>
-        <input style={S.input} placeholder="Paste image URL and press Enter" onKeyDown={(e) => { if (e.key === "Enter") handleImgUrl(e); }} />
+        <input
+  type="file"
+  accept="image/*"
+  multiple
+  onChange={handleImageUpload}
+  style={{ marginBottom: 12 }}
+/>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           {form.images.map((img, i) => (
             <div key={i} style={{ position: "relative" }}>
