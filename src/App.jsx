@@ -644,10 +644,10 @@ const refresh = async () => {
   };
 
   const login = async (email, password) => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
   if (error) return alert(error.message);
 
@@ -662,17 +662,7 @@ const refresh = async () => {
   setShowAuth(false); // ✅ closes modal
 };
 
-  if (error) return alert(error.message);
-
-  const { data: profile } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", data.user.id)
-    .single();
-
-  setUser(profile);
-  setShowAuth(false);
-};
+  
 
   const filtered = cars.filter(c => {
     const q = search.toLowerCase();
