@@ -461,6 +461,7 @@ const CarDetail = ({ car, user, onBack, savedIds, onToggleSave }) => {
 const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
   const [form, setForm] = useState(carToEdit || { carName: "", brand: "Toyota", price: "", location: "", condition: "Used", description: "", images: [] });
   const [err, setErr] = useState("");
+  const [uploading, setUploading] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const handleImageUpload = async (e) => {
   const files = Array.from(e.target.files);
@@ -468,6 +469,8 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
   if (form.images.length + files.length > 7) {
     return setErr("Maximum 7 images allowed");
   }
+
+  setUploading(true); // 🔥 start upload
 
   let uploadedUrls = [];
 
@@ -479,8 +482,8 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
       .upload(fileName, file);
 
     if (error) {
-      console.error(error);
-      return setErr("Upload failed: " + error.message);
+      setUploading(false);
+      return setErr("Upload failed");
     }
 
     const { data } = supabase.storage
@@ -489,14 +492,19 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
 
     uploadedUrls.push(data.publicUrl);
   }
+
   console.log("Uploaded URLs:", uploadedUrls);
+
   setForm((f) => ({
     ...f,
     images: [...f.images, ...uploadedUrls],
   }));
+
+  setUploading(false); // 🔥 done upload
 };
   const removeImg = (i) => setForm((f) => ({ ...f, images: f.images.filter((_, idx) => idx !== i) }));
  const save = async () => {
+  if (form.images.length === 0) {return setErr("Please upload at least one image.");}
   setErr("");
 
   if (!form.carName || !form.price || !form.location || !form.description) {
@@ -585,7 +593,13 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
           ))}
         </div>
         {err && <p style={S.errorTxt}>{err}</p>}
-        <button style={S.primaryBtn} onClick={save}>{carToEdit ? "Update Listing" : "Post Car"}</button>
+        <button
+          style={S.primaryBtn}
+          onClick={save}
+          disabled={uploading}
+        >
+          {uploading ? "Uploading images..." : "Post Car"}
+        </button>
         <button style={S.ghostBtn} onClick={onClose}>Cancel</button>
       </div>
     </div>
