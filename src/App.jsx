@@ -489,7 +489,7 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
 
     uploadedUrls.push(data.publicUrl);
   }
-
+  console.log("Uploaded URLs:", uploadedUrls);
   setForm((f) => ({
     ...f,
     images: [...f.images, ...uploadedUrls],
@@ -523,6 +523,7 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
 
   // NEW CAR
   else {
+    console.log("FORM IMAGES BEFORE SAVE:", form.images);
     const { error } = await supabase.from("cars").insert([
       {
         carName: form.carName,
@@ -540,7 +541,8 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
     if (error) return setErr(error.message);
   }
 
-  onSave();
+  await onSave();
+  onClose();
 };
     
   return (
@@ -779,7 +781,7 @@ return (
                             {showAuth && <AuthModal onClose={() => setShowAuth(false)} onLogin={login} setShowTerms={setShowTerms} setPendingUser={setPendingUser} />}
                             {showTerms && <TermsModal onAccept={acceptTerms} onDecline={() => setShowTerms(false)} />}  
                             {showFilter && <FilterPanel filters={filters} onChange={f => { setFilters(f); if (f.brand !== "All") setBrandFilter(f.brand); }} onClose={() => setShowFilter(false)} />}
-                            {(showPost || editCar) && user && <PostCarModal user={user} carToEdit={editCar} onClose={() => { setShowPost(false); setEditCar(null); }} onSave={() => { refresh(); setShowPost(false); setEditCar(null); }} />}
+                            {(showPost || editCar) && user && <PostCarModal user={user} carToEdit={editCar} onClose={() => { setShowPost(false); setEditCar(null); }} onSave={async () => { await refresh(); setShowPost(false); setEditCar(null); }} />}
                             {showWaPicker && <WaPickerModal carName={waCarContext?.carName} price={waCarContext?.price} onClose={() => setShowWaPicker(false)} />}
                             {/* HEADER */}
                             <div style={S.header}>
@@ -894,7 +896,33 @@ return (
                                       </div>
                                     ) : myCars.map(car => (
                                       <div key={car.id} style={{ background: WHITE, borderRadius: 12, padding: 14, marginBottom: 10, display: "flex", gap: 12, alignItems: "center" }}>
-                                        {car.images && car.images[0] ? <img src={car.images[0]} alt="" style={{ width: 64, height: 52, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} /> : <div style={{ width: 64, height: 52, borderRadius: 8, background: "#F0F0F0", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="photo" size={24} color="#CCC" /></div>}
+                                        {car.images?.length > 0 && car.images[0] ? (
+                                          <img
+                                            src={car.images[0]}
+                                            alt=""
+                                            style={{
+                                              width: 64,
+                                              height: 52,
+                                              borderRadius: 8,
+                                              objectFit: "cover",
+                                              flexShrink: 0,
+                                            }}
+                                          />
+                                        ) : (
+                                          <div
+                                            style={{
+                                              width: 64,
+                                              height: 52,
+                                              borderRadius: 8,
+                                              background: "#F0F0F0",
+                                              display: "flex",
+                                              alignItems: "center",
+                                              justifyContent: "center",
+                                            }}
+                                          >
+                                            <Icon name="photo" size={24} color="#CCC" />
+                                          </div>
+                                        )}
                                         <div style={{ flex: 1, minWidth: 0 }}>
                                           <p style={{ fontWeight: 700, fontSize: 14, margin: "0 0 2px", color: "#1A1A1A" }}>{car.carName}</p>
                                           <p style={{ color: RED, fontWeight: 700, fontSize: 13, margin: "0 0 2px" }}>{formatPrice(car.price)}</p>
