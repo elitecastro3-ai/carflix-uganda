@@ -716,8 +716,16 @@ useEffect(() => {
   const openWa = (car = null) => { setWaCarContext(car); setShowWaPicker(true); };
 
 const refresh = async () => {
-  const { data } = await supabase.from("cars").select("*");
-  setCars(data || []);
+  const { data, error } = await supabase.from("cars").select("*");
+
+console.log("FETCH RESULT:", data);
+console.log("FETCH ERROR:", error);
+
+if (error) {
+  alert("Fetch error: " + error.message);
+}
+
+setCars(data || []);
 };
   const toggleSave = (id) => {
     if (!user) return setShowAuth(true);
