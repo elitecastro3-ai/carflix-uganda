@@ -25,7 +25,7 @@ const WA_NUMBERS = [
 const formatPrice = (p) => "UGX " + p.toLocaleString();
 
 // ── FIREBASE SIMULATION (localStorage) ────────────────────────────────────────
-6
+
 
 // ── ICONS ──────────────────────────────────────────────────────────────────────
 const Icon = ({ name, size = 20, color = "currentColor" }) => {
@@ -460,6 +460,7 @@ const CarDetail = ({ car, user, onBack, savedIds, onToggleSave }) => {
 // ── POST CAR MODAL ─────────────────────────────────────────────────────────────
 const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
   const [form, setForm] = useState(carToEdit || { carName: "", brand: "Toyota", price: "", location: "", condition: "Used", description: "", images: [] });
+  const uploadedImagesRef = useRef([]);
   const [err, setErr] = useState("");
   const [uploading, setUploading] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -492,6 +493,18 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
 
     uploadedUrls.push(data.publicUrl);
   }
+  
+  console.log("Uploaded URLs:", uploadedUrls);
+
+uploadedImagesRef.current = [
+  ...uploadedImagesRef.current,
+  ...uploadedUrls,
+];
+
+setForm((f) => ({
+  ...f,
+  images: uploadedImagesRef.current,
+}));
 
   console.log("Uploaded URLs:", uploadedUrls);
 
@@ -506,6 +519,8 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
  const save = async () => {
   if (form.images.length === 0) {return setErr("Please upload at least one image.");}
   setErr("");
+
+  console.log("FINAL IMAGES BEING SAVED:", uploadedImagesRef.current);
 
   if (!form.carName || !form.price || !form.location || !form.description) {
     return setErr("Please fill all required fields.");
@@ -522,7 +537,7 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
         location: form.location,
         condition: form.condition,
         description: form.description,
-        images: form.images,
+        images: uploadedImagesRef.current,
       })
       .eq("id", carToEdit.id);
 
