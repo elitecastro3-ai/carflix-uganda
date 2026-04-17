@@ -460,7 +460,6 @@ const CarDetail = ({ car, user, onBack, savedIds, onToggleSave }) => {
 // ── POST CAR MODAL ─────────────────────────────────────────────────────────────
 const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
   const [form, setForm] = useState(carToEdit || { carName: "", brand: "Toyota", price: "", location: "", condition: "Used", description: "", images: [] });
-  const uploadedImagesRef = useRef([]);
   const [err, setErr] = useState("");
   const [uploading, setUploading] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -495,13 +494,10 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
   }
   
   console.log("Uploaded URLs:", uploadedUrls);
- setForm((prev) => {
-  const unique = [...new Set([...prev.images, ...uploadedUrls])];
-  return {
-    ...prev,
-    images: unique,
-  };
-});
+ setForm((prev) => ({
+   ...prev,
+   images:[...prev.image, ...uploadedUrls],
+ }));
 e.target.value = "";
 setUploading(false);
 
@@ -509,10 +505,7 @@ setUploading(false);
 
   console.log("Uploaded URLs:", uploadedUrls);
 
-  setForm((f) => ({
-    ...f,
-    images: [...f.images, ...uploadedUrls],
-  }));
+  
 
   setUploading(false); // 🔥 done upload
 };
@@ -538,7 +531,7 @@ setUploading(false);
         location: form.location,
         condition: form.condition,
         description: form.description,
-        images: uploadedImagesRef.current,
+        images: form.images
       })
       .eq("id", carToEdit.id);
 
@@ -707,6 +700,7 @@ export default function CarFlixApp() {
 useEffect(() => {
   const fetchCars = async () => {
     const { data } = await supabase.from("cars").select("*");
+    console.log("RAW CARS FROM DB:", data);
     setCars(data || []);
   };
 
