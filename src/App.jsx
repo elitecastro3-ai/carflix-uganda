@@ -495,16 +495,17 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
   }
   
   console.log("Uploaded URLs:", uploadedUrls);
+ setForm((prev) => {
+  const unique = [...new Set([...prev.images, ...uploadedUrls])];
+  return {
+    ...prev,
+    images: unique,
+  };
+});
+e.target.value = "";
+setUploading(false);
 
-uploadedImagesRef.current = [
-  ...uploadedImagesRef.current,
-  ...uploadedUrls,
-];
 
-setForm((f) => ({
-  ...f,
-  images: uploadedImagesRef.current,
-}));
 
   console.log("Uploaded URLs:", uploadedUrls);
 
@@ -774,11 +775,14 @@ const acceptTerms = () => {
   const CarCard = ({ car }) => (
     <div style={S.card}>
       <div style={{ position: "relative" }}>
-        {car.images && car.images[0] ? (
-          <img src={car.images[0]} alt={car.carName} style={S.cardImg} />
-        ) : (
-          <div style={S.noPhoto}><Icon name="photo" size={28} color="#CCC" /><span>No photo</span></div>
-        )}
+        {Array.isArray(car.images) && car.images.length > 0 ? (
+  <img src={car.images[0]} alt={car.carName} style={S.cardImg} />
+) : (
+  <div style={S.noPhoto}>
+    <Icon name="photo" size={28} color="#CCC" />
+    <span>No photo</span>
+  </div>
+)}
         {car.featured && <span style={S.badge("FEATURED")}>FEATURED</span>}
         {car.badge && !car.featured && <span style={S.badge("NEW")}>{car.badge}</span>}
         <button onClick={() => toggleSave(car.id)} style={S.heartBtn}>
