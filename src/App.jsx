@@ -514,7 +514,7 @@ setUploading(false);
   if (form.images.length === 0) {return setErr("Please upload at least one image.");}
   setErr("");
 
-  console.log("FINAL IMAGES BEING SAVED:", uploadedImagesRef.current);
+  console.log("FINAL IMAGES BEING SAVED:", form.images);
 
   if (!form.carName || !form.price || !form.location || !form.description) {
     return setErr("Please fill all required fields.");
