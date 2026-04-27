@@ -494,7 +494,10 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
   }
   
   console.log("Uploaded URLs:", uploadedUrls);
- 
+ setForm((prev) => ({
+   ...prev,
+   images:[...prev.images, ...uploadedUrls],
+ }));
 e.target.value = "";
 setUploading(false);
 
