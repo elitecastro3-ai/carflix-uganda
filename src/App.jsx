@@ -153,8 +153,7 @@ const TermsModal = ({ onAccept, onDecline }) => (
 
 // ── WHATSAPP PICKER MODAL ──────────────────────────────────────────────────────
 const WaPickerModal = ({ car, onClose }) => {
-  const msg = carName
-    const msg = `Hello 👋
+  const msg = `Hello 👋
 
 I'm interested in your *${car.carName}*
 
