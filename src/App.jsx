@@ -390,6 +390,7 @@ const CarDetail = ({ car, user, onBack, savedIds, onToggleSave }) => {
   const [imgIdx, setImgIdx] = useState(0);
   const [showWaPicker, setShowWaPicker] = useState(false);
   const saved = savedIds.includes(car.id);
+  console.log("CAR DATA:", car);
   const imgs = car.images && car.images.length > 0 ? car.images : null;
   return (
     <div style={{ background: "#F5F5F5", minHeight: "100vh" }}>
@@ -446,7 +447,22 @@ const CarDetail = ({ car, user, onBack, savedIds, onToggleSave }) => {
         </div>
       </div>
       <div style={{ padding: "0 16px 24px" }}>
-        <button onClick={() => setShowWaPicker(true)} style={{ ...S.primaryBtn, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+        <button onClick={() => {
+  if (!car.owner_phone) {
+    alert("Seller phone number not available");
+    return;
+  }
+
+  const phone = car.owner_phone.startsWith("0")
+    ? "256" + car.owner_phone.slice(1)
+    : car.owner_phone;
+
+  const msg = `Hi, I'm interested in your ${car.carName} listed at UGX ${car.price}. Is it still available?`;
+
+  const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+
+  window.open(url, "_blank");
+}}
           <Icon name="whatsapp" size={20} color={WHITE} /> Contact on WhatsApp
         </button>
         <button onClick={() => onToggleSave(car.id)} style={{ ...S.ghostBtn, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
@@ -553,6 +569,7 @@ setUploading(false);
           description: form.description,
           images: form.images,
           owner_id: user.id,
+          owner_phone: user.phone,
           featured: false,
         },
       ])
