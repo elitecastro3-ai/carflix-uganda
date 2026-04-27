@@ -541,21 +541,27 @@ setUploading(false);
   // NEW CAR
   else {
     console.log("FORM IMAGES BEFORE SAVE:", form.images);
-    const { error } = await supabase.from("cars").insert([
-      {
-        carName: form.carName,
-        brand: form.brand,
-        price: Number(form.price),
-        location: form.location,
-        condition: form.condition,
-        description: form.description,
-        images: form.images,
-        owner_id: user.id,
-        featured: false,
-      },
-    ]);
+      const { data, error } = await supabase
+      .from("cars")
+      .insert([
+        {
+          carName: form.carName,
+          brand: form.brand,
+          price: Number(form.price),
+          location: form.location,
+          condition: form.condition,
+          description: form.description,
+          images: form.images,
+          owner_id: user.id,
+          featured: false,
+        },
+      ])
+      .select(); // 🔥 IMPORTANT
 
-    if (error) return setErr(error.message);
+    console.log("INSERT DATA:", data);
+    console.log("INSERT ERROR:", error);
+
+    if (error) return setErr(error.message); 
   }
 
   await onSave();
