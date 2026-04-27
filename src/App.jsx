@@ -724,9 +724,20 @@ export default function CarFlixApp() {
   const [tab, setTab] = useState("home");
   const [cars, setCars] = useState([]);
  const deleteCar = async (id) => {
-  await supabase.from("cars").delete().eq("id", id);
+  // 🔒 confirm before deleting
+  if (!window.confirm("Are you sure you want to delete this car?")) return;
 
-  setCars((prev) => prev.filter((c) => c.id !== id));
+  const { error } = await supabase
+    .from("cars")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  await refresh(); // 🔥 VERY IMPORTANT
 };
   
   const [savedIds, setSavedIds] = useState([]);
