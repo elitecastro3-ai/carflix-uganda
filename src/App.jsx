@@ -465,7 +465,17 @@ const CarDetail = ({ car, user, onBack, savedIds, onToggleSave }) => {
               ? "256" + car.owner_phone.slice(1)
               : car.owner_phone;
 
-            const msg = `Hi, I'm interested in your ${car.carName} listed at UGX ${car.price}. Is it still available?`;
+            const msg = `Hello 👋
+
+        I'm interested in your *${car.carName}*
+
+        💰 Price: UGX ${car.price}
+        📍 Location: ${car.location}
+
+        📸 View car:
+        ${car.images?.[0] || ""}`;
+
+          
 
             const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
 
