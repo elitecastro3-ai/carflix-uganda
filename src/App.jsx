@@ -447,33 +447,50 @@ const CarDetail = ({ car, user, onBack, savedIds, onToggleSave }) => {
         </div>
       </div>
       <div style={{ padding: "0 16px 24px" }}>
+
         <button
-  onClick={() => {
-    if (!car.owner_phone) {
-      alert("Seller phone number not available");
-      return;
-    }
+          onClick={() => {
+            if (!car.owner_phone) {
+              alert("Seller phone number not available");
+              return;
+            }
 
-    const phone = car.owner_phone.startsWith("0")
-      ? "256" + car.owner_phone.slice(1)
-      : car.owner_phone;
+            const phone = car.owner_phone.startsWith("0")
+              ? "256" + car.owner_phone.slice(1)
+              : car.owner_phone;
 
-    const msg = `Hi, I'm interested in your ${car.carName} listed at UGX ${car.price}. Is it still available?`;
+            const msg = `Hi, I'm interested in your ${car.carName} listed at UGX ${car.price}. Is it still available?`;
 
-    const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+            const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
 
-    window.open(url, "_blank");
-  }}
-  style={{ ...S.primaryBtn, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
->
-  <Icon name="whatsapp" size={20} color={WHITE} />
-  Contact on WhatsApp
-</button>
-          <Icon name="whatsapp" size={20} color={WHITE} /> Contact on WhatsApp
+            window.open(url, "_blank");
+          }}
+          style={{
+            ...S.primaryBtn,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+          }}
+        >
+          <Icon name="whatsapp" size={20} color={WHITE} />
+          Contact on WhatsApp
         </button>
-        <button onClick={() => onToggleSave(car.id)} style={{ ...S.ghostBtn, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-          <Icon name={saved ? "heart" : "heart-outline"} size={18} color={RED} /> {saved ? "Saved" : "Save Car"}
+
+        <button
+          onClick={() => onToggleSave(car.id)}
+          style={{
+            ...S.ghostBtn,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+          }}
+        >
+          <Icon name={saved ? "heart" : "heart-outline"} size={18} color={RED} />
+          {saved ? "Saved" : "Save Car"}
         </button>
+
       </div>
     </div>
   );
