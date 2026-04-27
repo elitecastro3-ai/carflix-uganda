@@ -152,10 +152,17 @@ const TermsModal = ({ onAccept, onDecline }) => (
 );
 
 // ── WHATSAPP PICKER MODAL ──────────────────────────────────────────────────────
-const WaPickerModal = ({ carName, price, onClose }) => {
+const WaPickerModal = ({ car, onClose }) => {
   const msg = carName
-    ? `Hi, I am interested in the *${carName}* listed at *${formatPrice(price)}* on CAR-FLIX Uganda. Please share more details.`
-    : `Hi, I would like to enquire about a car listing on CAR-FLIX Uganda.`;
+    const msg = `Hello 👋
+
+I'm interested in your *${car.carName}*
+
+💰 Price: UGX ${car.price}
+📍 Location: ${car.location}
+
+📸 View car:
+${car.images?.[0] || ""}`;
   return (
     <div style={S.modalOverlay}>
       <div style={S.modal}>
@@ -863,7 +870,7 @@ return (
                             {showTerms && <TermsModal onAccept={acceptTerms} onDecline={() => setShowTerms(false)} />}  
                             {showFilter && <FilterPanel filters={filters} onChange={f => { setFilters(f); if (f.brand !== "All") setBrandFilter(f.brand); }} onClose={() => setShowFilter(false)} />}
                             {(showPost || editCar) && user && <PostCarModal user={user} carToEdit={editCar} onClose={() => { setShowPost(false); setEditCar(null); }} onSave={async () => { await refresh(); setShowPost(false); setEditCar(null); }} />}
-                            {showWaPicker && <WaPickerModal carName={waCarContext?.carName} price={waCarContext?.price} onClose={() => setShowWaPicker(false)} />}
+                            {showWaPicker && <WaPickerModal car={waCarContext} onClose={() => setShowWaPicker(false)} />}
                             {/* HEADER */}
                             <div style={S.header}>
                               <div style={S.logo}>
@@ -1036,7 +1043,7 @@ return (
                                   <h3 style={{ fontWeight: 800, fontSize: 16, color: "#1A1A1A", marginTop: 0 }}>Contact Us</h3>
                                   <p style={{ color: "#777", fontSize: 13, marginBottom: 14 }}>Reach our team on any of these WhatsApp lines:</p>
                                   {WA_NUMBERS.map((wa, i) => (
-                                    <button key={i} onClick={() => window.open(`https://wa.me/${wa.number}`, "_blank")}
+                                    <button key={i} onClick={() => window.open(`https://wa.me/${wa.number}?text=${encodeURIComponent(msg)}`, "_blank")}
                                       style={{ ...S.primaryBtn, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 10, background: i === 0 ? "#2E7D32" : i === 1 ? "#1565C0" : "#E65100" }}>
                                       <Icon name="whatsapp" size={18} color={WHITE} /> {wa.label}: {wa.display}
                                     </button>
