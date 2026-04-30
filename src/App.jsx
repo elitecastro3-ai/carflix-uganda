@@ -1063,7 +1063,11 @@ return (
                                   <h3 style={{ fontWeight: 800, fontSize: 16, color: "#1A1A1A", marginTop: 0 }}>Contact Us</h3>
                                   <p style={{ color: "#777", fontSize: 13, marginBottom: 14 }}>Reach our team on any of these WhatsApp lines:</p>
                                   {WA_NUMBERS.map((wa, i) => (
-                                    <button key={i} onClick={() => window.open(`https://wa.me/${wa.number}?text=${encodeURIComponent(msg)}`, "_blank")}
+                                    <button key={i} onClick={() => {
+                                                      const msg = "Hello, I'm requesting for help wit the app";
+                                                      const url = `https://wa.me/${wa.number}?text=${encodeURIComponent(msg)}`;
+                                                      window.open(url, "_blank");
+                                                    }}
                                       style={{ ...S.primaryBtn, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 10, background: i === 0 ? "#2E7D32" : i === 1 ? "#1565C0" : "#E65100" }}>
                                       <Icon name="whatsapp" size={18} color={WHITE} /> {wa.label}: {wa.display}
                                     </button>
