@@ -54,13 +54,23 @@ if (!user?.is_admin) {
     return u ? u.username : "Unknown";
   };
 
-  const toggleFeature = (id) => {
-  const updated = cars.map((c) =>
-    c.id === id ? { ...c, featured: !c.featured } : c
-  );
+  const toggleFeature = async (id) => {
+  const car = cars.find((c) => c.id === id);
 
-  setCars(updated);
-  localStorage.setItem("cf_cars", JSON.stringify(updated));
+  const { error } = await supabase
+    .from("cars")
+    .update({
+      featured: !car.featured
+    })
+    .eq("id", id);
+
+  if (error) {
+    console.log(error);
+    alert("Failed to update featured status");
+    return;
+  }
+
+  window.location.reload();
 };
 
 const updateStatus = (id, status) => {
