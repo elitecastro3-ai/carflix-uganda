@@ -74,10 +74,14 @@ if (!user?.is_admin) {
     return;
   }
 
-  // update UI instantly
-  car.featured = updatedFeatured;
+  // update state instantly without reload
+  const updatedCars = cars.map((c) =>
+    c.id === id
+      ? { ...c, featured: updatedFeatured }
+      : c
+  );
 
-  window.location.reload();
+  setCars(updatedCars);
 };
 
 const updateStatus = (id, status) => {
