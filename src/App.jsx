@@ -840,8 +840,11 @@ const acceptTerms = () => {
     if (filters.location && !c.location.toLowerCase().includes(filters.location.toLowerCase())) return false;
     if (filters.minPrice && c.price < Number(filters.minPrice)) return false;
     if (filters.maxPrice && c.price > Number(filters.maxPrice)) return false;
+    if (c.featured) return false;
+
     return true;
   });
+  const featuredCars = cars.filter(car => car.featured);
 
   const savedCars = cars.filter(c => savedIds.includes(c.id));
   const myCars = user ? cars.filter(c => c.owner_id === user.id) : [];
@@ -932,6 +935,27 @@ return (
                                     <span style={S.sectionTitle}>{filtered.length} Car{filtered.length !== 1 ? "s" : ""} Available</span>
                                     <button style={S.browseAll} onClick={() => { setSearch(""); setBrandFilter("All"); setFilters({ brand: "All", condition: "Any Condition", location: "", minPrice: "", maxPrice: "" }); }}>Browse all listings</button>
                                   </div>
+                                  {/* FEATURED CARS */}
+{featuredCars.length > 0 && (
+  <div style={{ marginBottom: 24 }}>
+    
+    <h2 style={{
+      color: "#fff",
+      marginBottom: 14,
+      fontSize: 22,
+      fontWeight: 700
+    }}>
+      ⭐ Featured Cars
+    </h2>
+
+    <div style={S.grid}>
+      {featuredCars.map(car => (
+        <CarCard key={car.id} car={car} />
+      ))}
+    </div>
+
+  </div>
+)}
                                   {filtered.length === 0 ? (
                                     <div style={{ textAlign: "center", padding: "40px 0", color: "#AAA" }}>
                                       <Icon name="search" size={40} color="#DDD" />
