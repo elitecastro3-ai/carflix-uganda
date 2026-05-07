@@ -57,6 +57,8 @@ if (!user?.is_admin) {
  const toggleFeature = async (id) => {
   const car = cars.find((c) => c.id === id);
 
+  if (!car) return;
+
   const updatedFeatured = !car.featured;
 
   const { error } = await supabase
@@ -72,14 +74,11 @@ if (!user?.is_admin) {
     return;
   }
 
-  const updatedCars = cars.map((c) =>
-    c.id === id
-      ? { ...c, featured: updatedFeatured }
-      : c
-  );
+  // update UI instantly
+  car.featured = updatedFeatured;
 
-  setCars(updatedCars);
-}; 
+  window.location.reload();
+};
 
 const updateStatus = (id, status) => {
   const updated = cars.map((c) =>
