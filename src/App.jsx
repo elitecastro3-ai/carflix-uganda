@@ -1109,7 +1109,7 @@ return (
       <Route
         path="/admin"
         element={
-          <AdminDashboard user={user} cars={cars} deleteCar={deleteCar} />
+          <AdminDashboard user={user} cars={cars}  setCars={setCars} deleteCar={deleteCar} />
         }
       />
 

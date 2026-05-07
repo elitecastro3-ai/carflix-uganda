@@ -10,7 +10,7 @@ const COLORS = {
   border: "#E0E0E0"
 };
 
-export default function AdminDashboard({ user, cars, deleteCar }) {
+export default function AdminDashboard({ user, cars, setCars, deleteCar }) {
   const [search, setSearch] = useState("");
   const [contacts] = useState(
     JSON.parse(localStorage.getItem("contacts") || "{}")
@@ -40,20 +40,22 @@ if (!user?.is_admin) {
   };
 
   const toggleFeature = (id) => {
-    const updated = cars.map((c) =>
-      c.id === id ? { ...c, featured: !c.featured } : c
-    );
-    localStorage.setItem("cf_cars", JSON.stringify(updated));
-    window.location.reload();
-  };
+  const updated = cars.map((c) =>
+    c.id === id ? { ...c, featured: !c.featured } : c
+  );
 
-  const updateStatus = (id, status) => {
-    const updated = cars.map((c) =>
-      c.id === id ? { ...c, status } : c
-    );
-    localStorage.setItem("cf_cars", JSON.stringify(updated));
-    window.location.reload();
-  };
+  setCars(updated);
+  localStorage.setItem("cf_cars", JSON.stringify(updated));
+};
+
+const updateStatus = (id, status) => {
+  const updated = cars.map((c) =>
+    c.id === id ? { ...c, status } : c
+  );
+
+  setCars(updated);
+  localStorage.setItem("cf_cars", JSON.stringify(updated));
+};
 
   const filtered = cars.filter(
     (c) =>
