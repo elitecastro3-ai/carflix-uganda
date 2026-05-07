@@ -54,13 +54,15 @@ if (!user?.is_admin) {
     return u ? u.username : "Unknown";
   };
 
-  const toggleFeature = async (id) => {
+ const toggleFeature = async (id) => {
   const car = cars.find((c) => c.id === id);
+
+  const updatedFeatured = !car.featured;
 
   const { error } = await supabase
     .from("cars")
     .update({
-      featured: !car.featured
+      featured: updatedFeatured
     })
     .eq("id", id);
 
@@ -70,8 +72,14 @@ if (!user?.is_admin) {
     return;
   }
 
-  window.location.reload();
-};
+  const updatedCars = cars.map((c) =>
+    c.id === id
+      ? { ...c, featured: updatedFeatured }
+      : c
+  );
+
+  setCars(updatedCars);
+}; 
 
 const updateStatus = (id, status) => {
   const updated = cars.map((c) =>
