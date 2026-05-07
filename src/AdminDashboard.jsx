@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { supabase } from "../supabase";
 
 const COLORS = {
   primary: "#B71C1C",
@@ -12,9 +13,23 @@ const COLORS = {
 
 export default function AdminDashboard({ user, cars, setCars, deleteCar }) {
   const [search, setSearch] = useState("");
+  const [users, setUsers] = useState([]);
   const [contacts] = useState(
     JSON.parse(localStorage.getItem("contacts") || "{}")
   );
+  useEffect(() => {
+  fetchUsers();
+}, []);
+
+const fetchUsers = async () => {
+  const { data, error } = await supabase
+    .from("users")
+    .select("*");
+
+  if (!error && data) {
+    setUsers(data);
+  }
+};
   console.log("USER:",user) 
   if (user === null) {
   return (
@@ -32,7 +47,7 @@ if (!user?.is_admin) {
   );
 }
 
-  const users = JSON.parse(localStorage.getItem("cf_users") || "[]");
+  
 
   const getUsername = (id) => {
     const u = users.find((x) => x.id === id);
