@@ -926,6 +926,24 @@ export default function CarFlixApp() {
   };
 
   const [savedIds, setSavedIds] = useState([]);
+  useEffect(() => {
+
+  const loadSavedCars = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("saved_cars")
+      .select("car_id")
+      .eq("user_id", user.id);
+
+    if (!error && data) {
+      setSavedIds(data.map(item => item.car_id));
+    }
+  };
+
+  loadSavedCars();
+
+}, [user]);
   const [search, setSearch] = useState("");
   const [brandFilter, setBrandFilter] = useState("All");
   const [filters, setFilters] = useState({ brand: "All", condition: "Any Condition", location: "", minPrice: "", maxPrice: "" });
@@ -977,12 +995,42 @@ export default function CarFlixApp() {
     setCars(data || []);
   };
 
-  const toggleSave = (id) => {
-    if (!user) return setShowAuth(true);
-    const s = savedIds.includes(id) ? savedIds.filter(x => x !== id) : [...savedIds, id];
-    setSavedIds(s);
-    localStorage.setItem("saved_" + user.id, JSON.stringify(s));
-  };
+  const toggleSave = async (carId) => {
+  if (!user) {
+    alert("Please login first");
+    return;
+  }
+
+  const alreadySaved = savedIds.includes(carId);
+
+  if (alreadySaved) {
+
+    const { error } = await supabase
+      .from("saved_cars")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("car_id", carId);
+
+    if (!error) {
+      setSavedIds(savedIds.filter(id => id !== carId));
+    }
+
+  } else {
+
+    const { error } = await supabase
+      .from("saved_cars")
+      .insert([
+        {
+          user_id: user.id,
+          car_id: carId
+        }
+      ]);
+
+    if (!error) {
+      setSavedIds([...savedIds, carId]);
+    }
+  }
+};
 
   const login = async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
