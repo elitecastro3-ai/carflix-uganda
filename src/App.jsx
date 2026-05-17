@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AdminDashboard from "./AdminDashboard";
 import { supabase } from "./supabase";
+
 // ── MOCK DATA ──────────────────────────────────────────────────────────────────
 const MOCK_CARS = [
   { id: "1", carName: "Noah", brand: "Toyota", price: 45000000, location: "Nakawa", condition: "Used", description: "Well maintained Toyota Noah, 7-seater, fuel efficient. Excellent condition for family use.", images: ["https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=400&q=80"], ownerId: "u1", badge: "New", featured: false },
@@ -23,9 +24,6 @@ const WA_NUMBERS = [
 ];
 
 const formatPrice = (p) => "UGX " + p.toLocaleString();
-
-// ── FIREBASE SIMULATION (localStorage) ────────────────────────────────────────
-
 
 // ── ICONS ──────────────────────────────────────────────────────────────────────
 const Icon = ({ name, size = 20, color = "currentColor" }) => {
@@ -51,6 +49,7 @@ const Icon = ({ name, size = 20, color = "currentColor" }) => {
     logout: "M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z",
     user: "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z",
     image: "M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z",
+    star: "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z",
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={color} style={{ flexShrink: 0 }}>
@@ -64,88 +63,407 @@ const RED = "#B71C1C";
 const RED_DARK = "#7F0000";
 const RED_LIGHT = "#EF5350";
 const WHITE = "#FFFFFF";
+const GOLD = "#F59E0B";
+const SURFACE = "#F4F4F6";
+const TEXT = "#111827";
+const MUTED = "#6B7280";
+const BORDER = "#E5E7EB";
+const CARD = "#FFFFFF";
 
 // ── STYLES ─────────────────────────────────────────────────────────────────────
 const S = {
-  app: { fontFamily: "'Segoe UI', sans-serif", background: "#F5F5F5", minHeight: "100vh", maxWidth: 480, margin: "0 auto", position: "relative", paddingBottom: 80 },
-  header: { background: RED, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 100 },
-  logo: { display: "flex", alignItems: "center", gap: 10 },
-  logoBox: { background: WHITE, borderRadius: 10, padding: "6px 8px", display: "flex", alignItems: "center", justifyContent: "center" },
-  logoText: { color: WHITE, fontWeight: 800, fontSize: 20, letterSpacing: 1 },
-  logoSub: { color: "rgba(255,255,255,0.7)", fontSize: 10, letterSpacing: 2 },
-  headerIcons: { display: "flex", gap: 12, alignItems: "center" },
-  iconBtn: { background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, padding: 8, cursor: "pointer", display: "flex", color: WHITE },
-  searchBar: { background: RED_DARK, padding: "12px 16px 16px" },
-  searchRow: {
-  display: "flex",
-  gap: 8,
-  alignItems: "center",
-},
-  searchInput: {
-  
-  padding: "12px 12px 12px 40px",
-  borderRadius: 10,
-  border: "1px solid #E0E0E0",
-  outline: "none",
+  app: {
+    fontFamily: "'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif",
+    background: SURFACE,
+    minHeight: "100vh",
+    maxWidth: 480,
+    margin: "0 auto",
+    position: "relative",
+    paddingBottom: 90,
+  },
 
-  // 🔥 FIXES
-  color: "#1A1A1A",      // visible text
-  background: "#FFFFFF", // clean background
-},
-  searchBtn: { background: RED_LIGHT, color: WHITE, border: "none", borderRadius: 10, padding: "10px 18px", fontWeight: 700, fontSize: 14, cursor: "pointer", flexShrink: 0, },
-  filterRow: { display: "flex", gap: 8, marginTop: 10, overflowX: "auto", paddingBottom: 2 },
-  filterChip: (active) => ({ background: active ? WHITE : "rgba(255,255,255,0.18)", color: active ? RED : WHITE, border: active ? "none" : "1.5px solid rgba(255,255,255,0.4)", borderRadius: 20, padding: "6px 14px", fontSize: 13, fontWeight: active ? 700 : 500, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }),
-  section: { padding: "14px 16px 0" },
-  sectionRow: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  sectionTitle: { fontWeight: 800, fontSize: 18, color: "#1A1A1A" },
-  browseAll: { color: RED, fontSize: 13, fontWeight: 600, cursor: "pointer", background: "none", border: "none" },
-  grid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
-  card: { background: WHITE, borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" },
-  cardImg: { width: "100%", height: 120, objectFit: "cover", background: "#EEE", display: "block", position: "relative" },
-  noPhoto: { height: 120, background: "#F0F0F0", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#AAA", fontSize: 12, gap: 6 },
-  cardBody: { padding: "10px 10px 12px" },
-  cardName: { fontWeight: 700, fontSize: 14, color: "#1A1A1A", marginBottom: 2 },
-  cardPrice: { color: RED, fontWeight: 800, fontSize: 13, marginBottom: 4 },
-  cardLoc: { display: "flex", alignItems: "center", gap: 4, color: "#888", fontSize: 12, marginBottom: 10 },
+  // ── Header
+  header: {
+    background: `linear-gradient(135deg, ${RED_DARK} 0%, ${RED} 100%)`,
+    padding: "14px 16px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    position: "sticky",
+    top: 0,
+    zIndex: 100,
+    boxShadow: "0 2px 16px rgba(127,0,0,0.35)",
+  },
+  logo: { display: "flex", alignItems: "center", gap: 10 },
+  logoBox: {
+    background: "rgba(255,255,255,0.18)",
+    borderRadius: 12,
+    padding: "7px 9px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    border: "1px solid rgba(255,255,255,0.25)",
+  },
+  logoText: { color: WHITE, fontWeight: 900, fontSize: 20, letterSpacing: 1.5 },
+  logoSub: { color: "rgba(255,255,255,0.6)", fontSize: 9, letterSpacing: 3, textTransform: "uppercase" },
+  headerIcons: { display: "flex", gap: 8, alignItems: "center" },
+  iconBtn: {
+    background: "rgba(255,255,255,0.15)",
+    border: "1px solid rgba(255,255,255,0.2)",
+    borderRadius: 10,
+    padding: "8px 10px",
+    cursor: "pointer",
+    display: "flex",
+    color: WHITE,
+  },
+
+  // ── Search bar
+  searchBar: {
+    background: `linear-gradient(180deg, ${RED} 0%, ${RED_DARK} 100%)`,
+    padding: "14px 16px 18px",
+  },
+  searchRow: { display: "flex", gap: 10, alignItems: "center" },
+  searchInput: {
+    flex: 1,
+    padding: "13px 14px 13px 44px",
+    borderRadius: 14,
+    border: "none",
+    outline: "none",
+    color: TEXT,
+    background: WHITE,
+    fontSize: 14,
+    boxShadow: "0 3px 10px rgba(0,0,0,0.18)",
+    width: "100%",
+    boxSizing: "border-box",
+    fontFamily: "inherit",
+  },
+  searchBtn: {
+    background: RED_LIGHT,
+    color: WHITE,
+    border: "none",
+    borderRadius: 12,
+    padding: "12px 18px",
+    fontWeight: 700,
+    fontSize: 14,
+    cursor: "pointer",
+    flexShrink: 0,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+    fontFamily: "inherit",
+  },
+  filterRow: {
+    display: "flex",
+    gap: 8,
+    marginTop: 12,
+    overflowX: "auto",
+    paddingBottom: 4,
+    scrollbarWidth: "none",
+    msOverflowStyle: "none",
+  },
+  filterChip: (active) => ({
+    background: active ? WHITE : "rgba(255,255,255,0.12)",
+    color: active ? RED : WHITE,
+    border: active ? "none" : "1.5px solid rgba(255,255,255,0.3)",
+    borderRadius: 24,
+    padding: "7px 16px",
+    fontSize: 13,
+    fontWeight: active ? 800 : 500,
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+    flexShrink: 0,
+    boxShadow: active ? "0 2px 8px rgba(0,0,0,0.2)" : "none",
+    fontFamily: "inherit",
+  }),
+
+  // ── Sections
+  section: { padding: "18px 16px 0" },
+  sectionRow: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 },
+  sectionTitle: { fontWeight: 800, fontSize: 17, color: TEXT },
+  browseAll: { color: RED, fontSize: 13, fontWeight: 700, cursor: "pointer", background: "none", border: "none", fontFamily: "inherit" },
+
+  // ── Car grid cards
+  grid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 },
+  card: {
+    background: CARD,
+    borderRadius: 18,
+    overflow: "hidden",
+    boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+    border: `1px solid ${BORDER}`,
+  },
+  cardImg: { width: "100%", height: 128, objectFit: "cover", background: "#EEE", display: "block" },
+  noPhoto: {
+    height: 128,
+    background: "#F3F4F6",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#C4C4C4",
+    fontSize: 11,
+    gap: 6,
+  },
+  cardBody: { padding: "10px 12px 14px" },
+  cardName: { fontWeight: 700, fontSize: 13, color: TEXT, marginBottom: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  cardPrice: { color: RED, fontWeight: 800, fontSize: 14, marginBottom: 6 },
+  cardLoc: { display: "flex", alignItems: "center", gap: 4, color: MUTED, fontSize: 11, marginBottom: 10 },
   cardBtns: { display: "flex", gap: 6 },
-  viewBtn: { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, border: `1.5px solid ${RED}`, borderRadius: 8, padding: "7px 0", color: RED, fontSize: 12, fontWeight: 700, cursor: "pointer", background: WHITE },
-  saveBtn: { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, background: RED, border: "none", borderRadius: 8, padding: "7px 0", color: WHITE, fontSize: 12, fontWeight: 700, cursor: "pointer" },
-  badge: (type) => ({ position: "absolute", top: 8, left: 8, background: type === "FEATURED" ? "#F9A825" : "#2E7D32", color: WHITE, fontSize: 10, fontWeight: 800, borderRadius: 6, padding: "3px 8px", letterSpacing: 0.5, zIndex: 2 }),
-  heartBtn: { position: "absolute", top: 6, right: 6, background: "rgba(255,255,255,0.9)", border: "none", borderRadius: 20, padding: "5px 6px", cursor: "pointer", display: "flex", zIndex: 2 },
-  bottomNav: { position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, background: WHITE, borderTop: "1px solid #EEE", display: "flex", zIndex: 200 },
-  navItem: (active) => ({ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "10px 0 8px", cursor: "pointer", color: active ? RED : "#999", background: "none", border: "none", fontSize: 10, fontWeight: active ? 700 : 400 }),
-  modalOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 500, display: "flex", alignItems: "flex-end" },
-  modal: { background: WHITE, borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, margin: "0 auto", padding: 24, maxHeight: "90vh", overflowY: "auto" },
-  modalTitle: { fontWeight: 800, fontSize: 20, color: "#1A1A1A", marginBottom: 16 },
-  input: { width: "100%", padding: "12px 14px", border: "1.5px solid #DDD", borderRadius: 10, fontSize: 14, marginBottom: 12, boxSizing: "border-box", outline: "none" },
-  select: { width: "100%", padding: "12px 14px", border: "1.5px solid #DDD", borderRadius: 10, fontSize: 14, marginBottom: 12, boxSizing: "border-box", background: WHITE },
-  textarea: { width: "100%", padding: "12px 14px", border: "1.5px solid #DDD", borderRadius: 10, fontSize: 14, marginBottom: 12, boxSizing: "border-box", resize: "vertical", minHeight: 80, outline: "none" },
-  primaryBtn: { width: "100%", background: RED, color: WHITE, border: "none", borderRadius: 12, padding: "14px 0", fontSize: 16, fontWeight: 800, cursor: "pointer", marginBottom: 10 },
-  ghostBtn: { width: "100%", background: "transparent", color: RED, border: `2px solid ${RED}`, borderRadius: 12, padding: "12px 0", fontSize: 15, fontWeight: 700, cursor: "pointer" },
-  label: { fontSize: 13, fontWeight: 600, color: "#555", marginBottom: 4, display: "block" },
-  errorTxt: { color: RED, fontSize: 12, marginBottom: 8 },
-  successTxt: { color: "#2E7D32", fontSize: 12, marginBottom: 8 },
-  pill: (on) => ({ display: "inline-flex", alignItems: "center", gap: 4, background: on ? "#FFEBEE" : "#F5F5F5", color: on ? RED : "#666", borderRadius: 20, padding: "4px 10px", fontSize: 12, fontWeight: 600 }),
-  postFab: { position: "fixed", bottom: 90, right: 16, background: RED, color: WHITE, border: "none", borderRadius: 50, width: 52, height: 52, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 16px rgba(183,28,28,0.5)", zIndex: 300 },
+  viewBtn: {
+    flex: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    border: `1.5px solid ${RED}`,
+    borderRadius: 10,
+    padding: "7px 0",
+    color: RED,
+    fontSize: 11,
+    fontWeight: 700,
+    cursor: "pointer",
+    background: WHITE,
+    fontFamily: "inherit",
+  },
+  saveBtn: {
+    flex: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    background: RED,
+    border: "none",
+    borderRadius: 10,
+    padding: "7px 0",
+    color: WHITE,
+    fontSize: 11,
+    fontWeight: 700,
+    cursor: "pointer",
+    fontFamily: "inherit",
+  },
+  badge: (type) => ({
+    position: "absolute",
+    top: 8,
+    left: 8,
+    background: type === "FEATURED" ? GOLD : "#16A34A",
+    color: WHITE,
+    fontSize: 9,
+    fontWeight: 800,
+    borderRadius: 6,
+    padding: "3px 8px",
+    letterSpacing: 0.5,
+    zIndex: 2,
+    textTransform: "uppercase",
+  }),
+  heartBtn: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    background: "rgba(255,255,255,0.95)",
+    border: "none",
+    borderRadius: 20,
+    padding: "6px",
+    cursor: "pointer",
+    display: "flex",
+    zIndex: 2,
+    boxShadow: "0 1px 5px rgba(0,0,0,0.18)",
+  },
+
+  // ── Bottom nav
+  bottomNav: {
+    position: "fixed",
+    bottom: 0,
+    left: "50%",
+    transform: "translateX(-50%)",
+    width: "100%",
+    maxWidth: 480,
+    background: WHITE,
+    borderTop: `1px solid ${BORDER}`,
+    display: "flex",
+    zIndex: 200,
+    boxShadow: "0 -4px 20px rgba(0,0,0,0.07)",
+  },
+  navItem: (active) => ({
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 3,
+    padding: "11px 0 9px",
+    cursor: "pointer",
+    color: active ? RED : "#9CA3AF",
+    background: "none",
+    border: "none",
+    fontSize: 10,
+    fontWeight: active ? 800 : 500,
+    fontFamily: "inherit",
+    position: "relative",
+  }),
+  navDot: {
+    position: "absolute",
+    top: 0,
+    left: "50%",
+    transform: "translateX(-50%)",
+    width: 28,
+    height: 3,
+    background: RED,
+    borderRadius: "0 0 4px 4px",
+  },
+
+  // ── Modals
+  modalOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.6)",
+    zIndex: 500,
+    display: "flex",
+    alignItems: "flex-end",
+  },
+  modal: {
+    background: WHITE,
+    borderRadius: "24px 24px 0 0",
+    width: "100%",
+    maxWidth: 480,
+    margin: "0 auto",
+    padding: "8px 20px 32px",
+    maxHeight: "92vh",
+    overflowY: "auto",
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    background: "#E5E7EB",
+    borderRadius: 2,
+    margin: "10px auto 18px",
+  },
+  modalTitle: { fontWeight: 800, fontSize: 20, color: TEXT, marginBottom: 16 },
+
+  // ── Forms
+  input: {
+    width: "100%",
+    padding: "13px 14px",
+    border: `1.5px solid ${BORDER}`,
+    borderRadius: 12,
+    fontSize: 14,
+    marginBottom: 12,
+    boxSizing: "border-box",
+    outline: "none",
+    color: TEXT,
+    background: WHITE,
+    fontFamily: "inherit",
+  },
+  select: {
+    width: "100%",
+    padding: "13px 14px",
+    border: `1.5px solid ${BORDER}`,
+    borderRadius: 12,
+    fontSize: 14,
+    marginBottom: 12,
+    boxSizing: "border-box",
+    background: WHITE,
+    color: TEXT,
+    fontFamily: "inherit",
+  },
+  textarea: {
+    width: "100%",
+    padding: "13px 14px",
+    border: `1.5px solid ${BORDER}`,
+    borderRadius: 12,
+    fontSize: 14,
+    marginBottom: 12,
+    boxSizing: "border-box",
+    resize: "vertical",
+    minHeight: 90,
+    outline: "none",
+    color: TEXT,
+    fontFamily: "inherit",
+  },
+  primaryBtn: {
+    width: "100%",
+    background: RED,
+    color: WHITE,
+    border: "none",
+    borderRadius: 14,
+    padding: "15px 0",
+    fontSize: 15,
+    fontWeight: 800,
+    cursor: "pointer",
+    marginBottom: 10,
+    fontFamily: "inherit",
+    letterSpacing: 0.3,
+  },
+  ghostBtn: {
+    width: "100%",
+    background: "transparent",
+    color: RED,
+    border: `2px solid ${RED}`,
+    borderRadius: 14,
+    padding: "13px 0",
+    fontSize: 14,
+    fontWeight: 700,
+    cursor: "pointer",
+    fontFamily: "inherit",
+  },
+  label: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: MUTED,
+    marginBottom: 5,
+    display: "block",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  errorTxt: { color: RED, fontSize: 12, marginBottom: 8, fontWeight: 600 },
+  successTxt: { color: "#16A34A", fontSize: 12, marginBottom: 8 },
+  pill: (on) => ({
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 4,
+    background: on ? "#FFF0F0" : "#F3F4F6",
+    color: on ? RED : MUTED,
+    borderRadius: 20,
+    padding: "5px 12px",
+    fontSize: 12,
+    fontWeight: 700,
+  }),
+  postFab: {
+    position: "fixed",
+    bottom: 104,
+    right: 18,
+    background: RED,
+    color: WHITE,
+    border: "none",
+    borderRadius: 50,
+    width: 56,
+    height: 56,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    boxShadow: "0 6px 24px rgba(183,28,28,0.5)",
+    zIndex: 300,
+  },
 };
 
 // ── TERMS & CONDITIONS ─────────────────────────────────────────────────────────
 const TermsModal = ({ onAccept, onDecline }) => (
   <div style={S.modalOverlay}>
     <div style={{ ...S.modal, maxHeight: "85vh" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-        <h2 style={{ ...S.modalTitle, margin: 0, fontSize: 17 }}>Terms & Conditions</h2>
-        <button onClick={onDecline} style={{ background: "none", border: "none", cursor: "pointer" }}><Icon name="close" size={22} color="#555" /></button>
+      <div style={S.modalHandle} />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+        <h2 style={{ ...S.modalTitle, margin: 0, fontSize: 18 }}>Terms & Conditions</h2>
+        <button onClick={onDecline} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+          <Icon name="close" size={22} color={MUTED} />
+        </button>
       </div>
-      <div style={{ fontSize: 13, color: "#444", lineHeight: 1.7, marginBottom: 16 }}>
-        <p style={{ fontWeight: 700, color: RED, marginBottom: 8 }}>Welcome to CAR-FLIX Uganda</p>
+      <div style={{ fontSize: 13.5, color: "#444", lineHeight: 1.75, marginBottom: 20 }}>
+        <div style={{ background: "#FFF0F0", borderRadius: 12, padding: "12px 14px", marginBottom: 14 }}>
+          <p style={{ fontWeight: 800, color: RED, margin: 0, fontSize: 14 }}>Welcome to CAR-FLIX Uganda</p>
+        </div>
         <p>CAR-FLIX is a third-party marketplace platform that helps connect car sellers with interested buyers from different parts of Africa.</p>
         <p>The role of CAR-FLIX is <strong>only to help link buyers and sellers</strong> and increase the visibility of listings to potential buyers.</p>
         <p>CAR-FLIX team members are <strong>not responsible</strong> for agreements made between buyers and sellers, including negotiations, payments, or transaction outcomes.</p>
         <p>If there are any illegalities concerning a listed vehicle — such as theft, fraud, or tax violations — the CAR-FLIX team is <strong>not liable</strong>. Such matters will be handled by the appropriate law enforcement authorities.</p>
-        <p style={{ fontWeight: 600 }}>By registering, you confirm that you have read, understood, and agreed to these Terms & Conditions.</p>
+        <p style={{ fontWeight: 600, color: "#333" }}>By registering, you confirm that you have read, understood, and agreed to these Terms & Conditions.</p>
       </div>
-      <button onClick={onAccept} style={S.primaryBtn}>I Accept & Continue</button>
+      <button onClick={onAccept} style={S.primaryBtn}>I Accept &amp; Continue</button>
       <button onClick={onDecline} style={S.ghostBtn}>Decline</button>
     </div>
   </div>
@@ -153,40 +471,49 @@ const TermsModal = ({ onAccept, onDecline }) => (
 
 // ── WHATSAPP PICKER MODAL ──────────────────────────────────────────────────────
 const WaPickerModal = ({ car, onClose }) => {
-  const msg = `Hello 👋
-
-I'm interested in your *${car.carName}*
-
-💰 Price: UGX ${car.price}
-📍 Location: ${car.location}
-
-📸 View car:
-${car.images?.[0] || ""}`;
+  const msg = `Hello 👋\n\nI'm interested in your *${car.carName}*\n\n💰 Price: UGX ${car.price}\n📍 Location: ${car.location}\n\n📸 View car:\n${car.images?.[0] || ""}`;
+  const waColors = ["#16A34A", "#1D4ED8", "#EA580C"];
+  const waBg = ["#F0FDF4", "#EFF6FF", "#FFF7ED"];
   return (
     <div style={S.modalOverlay}>
       <div style={S.modal}>
+        <div style={S.modalHandle} />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
           <h2 style={{ ...S.modalTitle, margin: 0, fontSize: 18 }}>Contact via WhatsApp</h2>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><Icon name="close" size={22} color="#555" /></button>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+            <Icon name="close" size={22} color={MUTED} />
+          </button>
         </div>
-        <p style={{ color: "#777", fontSize: 13, marginBottom: 18 }}>Choose which line to message. All lines go to our CAR-FLIX team.</p>
+        <p style={{ color: MUTED, fontSize: 13, marginBottom: 18 }}>Choose which line to message. All lines go to our CAR-FLIX team.</p>
         {WA_NUMBERS.map((wa, i) => (
           <button
             key={i}
             onClick={() => { window.open(`https://wa.me/${wa.number}?text=${encodeURIComponent(msg)}`, "_blank"); onClose(); }}
-            style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, background: i === 0 ? "#E8F5E9" : i === 1 ? "#E3F2FD" : "#FFF8E1", border: "none", borderRadius: 12, padding: "14px 16px", marginBottom: 10, cursor: "pointer" }}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+              background: waBg[i],
+              border: `1px solid ${waColors[i]}22`,
+              borderRadius: 14,
+              padding: "14px 16px",
+              marginBottom: 10,
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
           >
-            <div style={{ width: 42, height: 42, borderRadius: 21, background: i === 0 ? "#2E7D32" : i === 1 ? "#1565C0" : "#E65100", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 22, background: waColors[i], display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <Icon name="whatsapp" size={22} color={WHITE} />
             </div>
-            <div style={{ textAlign: "left" }}>
-              <p style={{ fontWeight: 700, fontSize: 14, margin: "0 0 2px", color: "#1A1A1A" }}>{wa.label}</p>
-              <p style={{ fontSize: 13, color: "#555", margin: 0 }}>{wa.display}</p>
+            <div style={{ textAlign: "left", flex: 1 }}>
+              <p style={{ fontWeight: 700, fontSize: 14, margin: "0 0 2px", color: TEXT }}>{wa.label}</p>
+              <p style={{ fontSize: 13, color: MUTED, margin: 0 }}>{wa.display}</p>
             </div>
-            <div style={{ marginLeft: "auto", color: "#AAA" }}>›</div>
+            <span style={{ color: MUTED, fontSize: 18 }}>›</span>
           </button>
         ))}
-        <button style={S.ghostBtn} onClick={onClose}>Cancel</button>
+        <button style={{ ...S.ghostBtn, marginTop: 4 }} onClick={onClose}>Cancel</button>
       </div>
     </div>
   );
@@ -195,91 +522,44 @@ ${car.images?.[0] || ""}`;
 // ── AUTH MODAL ─────────────────────────────────────────────────────────────────
 const AuthModal = ({ onClose, onLogin }) => {
   const [mode, setMode] = useState("login");
-  const [form, setForm] = useState({
-    username: "",
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const [form, setForm] = useState({ username: "", email: "", phone: "", password: "", confirmPassword: "" });
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const set = (k) => (e) =>
-    setForm((f) => ({ ...f, [k]: e.target.value }));
-
-  // 🔥 Auto-fill last email
   useEffect(() => {
     const savedEmail = localStorage.getItem("lastEmail");
-    if (savedEmail) {
-      setForm((f) => ({ ...f, email: savedEmail }));
-    }
+    if (savedEmail) setForm((f) => ({ ...f, email: savedEmail }));
   }, []);
 
-  // REGISTER
   const handleRegister = async () => {
     setErr("");
     setLoading(true);
-
     if (!form.username || !form.email || !form.phone || !form.password) {
       setLoading(false);
       return setErr("All fields are required.");
     }
-
     if (form.password !== form.confirmPassword) {
       setLoading(false);
       return setErr("Passwords do not match");
     }
-
-    const { data, error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-    });
-
-    if (error) {
-      setLoading(false);
-      return setErr(error.message);
-    }
-
-    const { error: insertError } = await supabase.from("users").insert([
-      {
-        id: data.user?.id,
-        username: form.username,
-        phone: form.phone,
-        is_admin: false,
-      },
-    ]);
-
-    if (insertError) {
-      setLoading(false);
-      return setErr(insertError.message);
-    }
-
+    const { data, error } = await supabase.auth.signUp({ email: form.email, password: form.password });
+    if (error) { setLoading(false); return setErr(error.message); }
+    const { error: insertError } = await supabase.from("users").insert([{ id: data.user?.id, username: form.username, phone: form.phone, is_admin: false }]);
+    if (insertError) { setLoading(false); return setErr(insertError.message); }
     localStorage.setItem("lastEmail", form.email);
-
     setLoading(false);
     alert("Account created! Now login.");
     setMode("login");
   };
 
-  // LOGIN
   const handleLogin = async () => {
     setErr("");
     setLoading(true);
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email: form.email,
-      password: form.password,
-    });
-
-    if (error) {
-      setLoading(false);
-      return setErr(error.message);
-    }
-
+    const { error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password });
+    if (error) { setLoading(false); return setErr(error.message); }
     localStorage.setItem("lastEmail", form.email);
-
     onLogin(form.email, form.password);
     setLoading(false);
   };
@@ -287,226 +567,189 @@ const AuthModal = ({ onClose, onLogin }) => {
   return (
     <div style={S.modalOverlay}>
       <div style={S.modal}>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <h2>{mode === "login" ? "Sign In" : "Create Account"}</h2>
-          <button onClick={onClose}>X</button>
+        <div style={S.modalHandle} />
+        {/* Branding */}
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <div style={{ width: 52, height: 52, background: RED, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px" }}>
+            <Icon name="admin" size={26} color={WHITE} />
+          </div>
+          <h2 style={{ fontWeight: 900, fontSize: 20, color: TEXT, margin: "0 0 4px" }}>
+            {mode === "login" ? "Welcome back" : "Create account"}
+          </h2>
+          <p style={{ color: MUTED, fontSize: 13, margin: 0 }}>
+            {mode === "login" ? "Sign in to your CAR-FLIX account" : "Join CAR-FLIX Uganda today"}
+          </p>
         </div>
 
-        {/* REGISTER */}
+        {/* Tab switcher */}
+        <div style={{ display: "flex", background: "#F3F4F6", borderRadius: 12, padding: 4, marginBottom: 20 }}>
+          {["login", "register"].map((m) => (
+            <button key={m} onClick={() => { setMode(m); setErr(""); }}
+              style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", background: mode === m ? WHITE : "transparent", color: mode === m ? RED : MUTED, boxShadow: mode === m ? "0 1px 4px rgba(0,0,0,0.1)" : "none" }}>
+              {m === "login" ? "Sign In" : "Register"}
+            </button>
+          ))}
+        </div>
+
         {mode === "register" && (
           <>
             <label style={S.label}>Username</label>
-            <input style={S.input} value={form.username} onChange={set("username")} />
-
-            <label style={S.label}>Email</label>
-            <input style={S.input} value={form.email} onChange={set("email")} />
-
+            <input style={S.input} placeholder="e.g. john_doe" value={form.username} onChange={set("username")} />
             <label style={S.label}>Phone Number</label>
-            <input style={S.input} value={form.phone} onChange={set("phone")} />
+            <input style={S.input} placeholder="e.g. 0701234567" value={form.phone} onChange={set("phone")} />
           </>
         )}
 
-        {/* LOGIN */}
-        {mode === "login" && (
-          <>
-            <label style={S.label}>Email</label>
-            <input style={S.input} value={form.email} onChange={set("email")} />
-          </>
-        )}
+        <label style={S.label}>Email Address</label>
+        <input style={S.input} placeholder="your@email.com" value={form.email} onChange={set("email")} />
 
-        {/* PASSWORD */}
         <label style={S.label}>Password</label>
-        <div style={{ position: "relative" }}>
+        <div style={{ position: "relative", marginBottom: 0 }}>
           <input
-            style={S.input}
+            style={{ ...S.input, paddingRight: 52 }}
             type={showPassword ? "text" : "password"}
+            placeholder="••••••••"
             value={form.password}
             onChange={set("password")}
           />
-          <span
-            onClick={() => setShowPassword(!showPassword)}
-            style={{
-              position: "absolute",
-              right: 10,
-              top: "50%",
-              transform: "translateY(-50%)",
-              cursor: "pointer",
-              fontSize: 12,
-              color: "#777",
-            }}
-          >
+          <button onClick={() => setShowPassword(!showPassword)}
+            style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-60%)", background: "none", border: "none", cursor: "pointer", color: MUTED, fontSize: 12, fontWeight: 700, fontFamily: "inherit" }}>
             {showPassword ? "Hide" : "Show"}
-          </span>
+          </button>
         </div>
 
-        {/* CONFIRM PASSWORD */}
         {mode === "register" && (
           <>
-            <label style={S.label}>Confirm Password</label>
-            <input
-              style={S.input}
-              type="password"
-              value={form.confirmPassword}
-              onChange={set("confirmPassword")}
-            />
+            <label style={{ ...S.label, marginTop: 0 }}>Confirm Password</label>
+            <input style={S.input} type="password" placeholder="••••••••" value={form.confirmPassword} onChange={set("confirmPassword")} />
           </>
         )}
 
-        {/* ERROR */}
-        {err && <p style={{ color: "red" }}>{err}</p>}
+        {err && (
+          <div style={{ background: "#FFF0F0", border: "1px solid #FECACA", borderRadius: 10, padding: "10px 12px", marginBottom: 12 }}>
+            <p style={{ ...S.errorTxt, margin: 0 }}>{err}</p>
+          </div>
+        )}
 
-        {/* BUTTON */}
         <button
-          style={{
-            ...S.primaryBtn,
-            opacity: loading ? 0.7 : 1,
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
+          style={{ ...S.primaryBtn, marginTop: 8, opacity: loading ? 0.7 : 1, cursor: loading ? "not-allowed" : "pointer" }}
           disabled={loading || !form.email || !form.password}
           onClick={mode === "login" ? handleLogin : handleRegister}
         >
-          {loading
-            ? mode === "login"
-              ? "Signing in..."
-              : "Creating account..."
-            : mode === "login"
-            ? "Sign In"
-            : "Register"}
+          {loading ? (mode === "login" ? "Signing in…" : "Creating account…") : (mode === "login" ? "Sign In" : "Create Account")}
         </button>
 
-        {/* SWITCH MODE */}
-        <p>
-          {mode === "login" ? "No account?" : "Already have one?"}
-          <span
-            style={{ color: "red", cursor: "pointer" }}
-            onClick={() => {
-              setMode(mode === "login" ? "register" : "login");
-              setErr("");
-            }}
-          >
-            {mode === "login" ? " Register" : " Sign In"}
-          </span>
-        </p>
+        <button onClick={onClose} style={{ ...S.ghostBtn, marginTop: 4 }}>Cancel</button>
       </div>
     </div>
   );
 };
+
 // ── CAR DETAIL PAGE ────────────────────────────────────────────────────────────
 const CarDetail = ({ car, user, onBack, savedIds, onToggleSave }) => {
   const [imgIdx, setImgIdx] = useState(0);
-  const [showWaPicker, setShowWaPicker] = useState(false);
   const saved = savedIds.includes(car.id);
-  console.log("CAR DATA:", car);
   const imgs = car.images && car.images.length > 0 ? car.images : null;
+
   return (
-    <div style={{ background: "#F5F5F5", minHeight: "100vh" }}>
+    <div style={{ background: SURFACE, minHeight: "100vh", fontFamily: "'Plus Jakarta Sans', 'Segoe UI', sans-serif" }}>
+      {/* Header */}
       <div style={{ ...S.header, position: "sticky", top: 0 }}>
-        <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", color: WHITE, display: "flex" }}><Icon name="back" size={24} color={WHITE} /></button>
-        <span style={{ ...S.logoText, fontSize: 17 }}>Car Details</span>
-        <button onClick={() => onToggleSave(car.id)} style={{ background: "none", border: "none", cursor: "pointer" }}>
-          <Icon name={saved ? "heart" : "heart-outline"} size={24} color={WHITE} />
+        <button onClick={onBack} style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 10, padding: "8px 10px", cursor: "pointer", display: "flex" }}>
+          <Icon name="back" size={22} color={WHITE} />
+        </button>
+        <span style={{ ...S.logoText, fontSize: 16, letterSpacing: 0.5 }}>Car Details</span>
+        <button onClick={() => onToggleSave(car.id)} style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 10, padding: "8px 10px", cursor: "pointer", display: "flex" }}>
+          <Icon name={saved ? "heart" : "heart-outline"} size={22} color={WHITE} />
         </button>
       </div>
+
+      {/* Hero image */}
       <div style={{ position: "relative", background: "#EEE" }}>
         {imgs ? (
-          <img src={imgs[imgIdx]} alt={car.carName} style={{ width: "100%", height: 240, objectFit: "cover" }} />
+          <img src={imgs[imgIdx]} alt={car.carName} style={{ width: "100%", height: 260, objectFit: "cover", display: "block" }} />
         ) : (
-          <div style={{ height: 240, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#AAA", gap: 8 }}>
-            <Icon name="photo" size={48} color="#CCC" /><span style={{ fontSize: 14 }}>No photos available</span>
+          <div style={{ height: 260, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#AAA", gap: 10, background: "#F0F0F0" }}>
+            <Icon name="photo" size={52} color="#CCC" />
+            <span style={{ fontSize: 14, color: MUTED }}>No photos available</span>
           </div>
         )}
+        {/* Dot indicators */}
         {imgs && imgs.length > 1 && (
-          <div style={{ position: "absolute", bottom: 12, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6 }}>
+          <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6 }}>
             {imgs.map((_, i) => (
-              <div key={i} onClick={() => setImgIdx(i)} style={{ width: i === imgIdx ? 20 : 8, height: 8, borderRadius: 4, background: i === imgIdx ? WHITE : "rgba(255,255,255,0.5)", cursor: "pointer", transition: "all 0.2s" }} />
+              <div key={i} onClick={() => setImgIdx(i)}
+                style={{ width: i === imgIdx ? 22 : 8, height: 8, borderRadius: 4, background: i === imgIdx ? WHITE : "rgba(255,255,255,0.5)", cursor: "pointer", transition: "all 0.2s" }} />
             ))}
           </div>
         )}
+        {/* Featured badge */}
+        {car.featured && (
+          <div style={{ position: "absolute", top: 14, left: 14, background: GOLD, color: WHITE, fontSize: 11, fontWeight: 800, padding: "5px 12px", borderRadius: 8 }}>
+            ⭐ FEATURED
+          </div>
+        )}
       </div>
+
+      {/* Thumbnail strip */}
       {imgs && imgs.length > 1 && (
-        <div style={{ display: "flex", gap: 8, padding: "10px 16px", overflowX: "auto" }}>
+        <div style={{ display: "flex", gap: 8, padding: "12px 16px", overflowX: "auto", background: WHITE, scrollbarWidth: "none" }}>
           {imgs.map((img, i) => (
-            <img key={i} src={img} alt="" onClick={() => setImgIdx(i)} style={{ width: 64, height: 52, objectFit: "cover", borderRadius: 8, cursor: "pointer", border: i === imgIdx ? `2px solid ${RED}` : "2px solid transparent", flexShrink: 0 }} />
+            <img key={i} src={img} alt="" onClick={() => setImgIdx(i)}
+              style={{ width: 68, height: 54, objectFit: "cover", borderRadius: 10, cursor: "pointer", border: i === imgIdx ? `2.5px solid ${RED}` : "2.5px solid transparent", flexShrink: 0 }} />
           ))}
         </div>
       )}
-      <div style={{ background: WHITE, margin: "12px 16px", borderRadius: 14, padding: 16 }}>
+
+      {/* Info card */}
+      <div style={{ background: WHITE, margin: "12px 16px", borderRadius: 18, padding: 18, boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#1A1A1A", flex: 1 }}>{car.carName}</h2>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: TEXT, flex: 1, lineHeight: 1.3 }}>{car.carName}</h2>
           <span style={S.pill(true)}>{car.condition}</span>
         </div>
-        <p style={{ color: RED, fontWeight: 800, fontSize: 22, margin: "4px 0 10px" }}>{formatPrice(car.price)}</p>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#666", fontSize: 14, marginBottom: 12 }}>
-          <Icon name="location" size={16} color="#999" />{car.location}
+        <p style={{ color: RED, fontWeight: 900, fontSize: 24, margin: "6px 0 10px", letterSpacing: -0.5 }}>{formatPrice(car.price)}</p>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, color: MUTED, fontSize: 14, marginBottom: 14 }}>
+          <Icon name="location" size={16} color={MUTED} />{car.location}
         </div>
-        <div style={{ borderTop: "1px solid #F0F0F0", paddingTop: 12 }}>
-          <p style={{ fontWeight: 700, fontSize: 14, color: "#333", marginBottom: 6 }}>Description</p>
-          <p style={{ color: "#555", fontSize: 14, lineHeight: 1.7, margin: 0 }}>{car.description}</p>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 14 }}>
+
+        {/* Specs */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
           {[["Brand", car.brand], ["Condition", car.condition], ["Location", car.location]].map(([k, v]) => (
-            <div key={k} style={{ background: "#F9F9F9", borderRadius: 10, padding: "10px 12px" }}>
-              <p style={{ color: "#999", fontSize: 11, fontWeight: 600, margin: "0 0 2px", textTransform: "uppercase" }}>{k}</p>
-              <p style={{ color: "#1A1A1A", fontSize: 14, fontWeight: 700, margin: 0 }}>{v}</p>
+            <div key={k} style={{ background: SURFACE, borderRadius: 12, padding: "10px 14px", border: `1px solid ${BORDER}` }}>
+              <p style={{ color: MUTED, fontSize: 10, fontWeight: 700, margin: "0 0 3px", textTransform: "uppercase", letterSpacing: 0.6 }}>{k}</p>
+              <p style={{ color: TEXT, fontSize: 14, fontWeight: 800, margin: 0 }}>{v}</p>
             </div>
           ))}
         </div>
-      </div>
-      <div style={{ padding: "0 16px 24px" }}>
 
+        {/* Description */}
+        <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: 14 }}>
+          <p style={{ fontWeight: 800, fontSize: 14, color: TEXT, marginBottom: 8, marginTop: 0 }}>Description</p>
+          <p style={{ color: MUTED, fontSize: 14, lineHeight: 1.75, margin: 0 }}>{car.description}</p>
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      <div style={{ padding: "0 16px 32px" }}>
         <button
           onClick={() => {
-            if (!car.owner_phone) {
-              alert("Seller phone number not available");
-              return;
-            }
-
-            const phone = car.owner_phone.startsWith("0")
-              ? "256" + car.owner_phone.slice(1)
-              : car.owner_phone;
-
-            const msg = `Hello 👋
-
-        I'm interested in your *${car.carName}*
-
-        💰 Price: UGX ${car.price}
-        📍 Location: ${car.location}
-
-        📸 View car:
-        ${car.images?.[0] || ""}`;
-
-          
-
-            const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
-
-            window.open(url, "_blank");
+            if (!car.owner_phone) { alert("Seller phone number not available"); return; }
+            const phone = car.owner_phone.startsWith("0") ? "256" + car.owner_phone.slice(1) : car.owner_phone;
+            const msg = `Hello 👋\n\nI'm interested in your *${car.carName}*\n\n💰 Price: UGX ${car.price}\n📍 Location: ${car.location}\n\n📸 View car:\n${car.images?.[0] || ""}`;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
           }}
-          style={{
-            ...S.primaryBtn,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-          }}
+          style={{ ...S.primaryBtn, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: "#16A34A", borderRadius: 16, fontSize: 16 }}
         >
-          <Icon name="whatsapp" size={20} color={WHITE} />
-          Contact on WhatsApp
+          <Icon name="whatsapp" size={22} color={WHITE} />
+          Contact Seller on WhatsApp
         </button>
-
         <button
           onClick={() => onToggleSave(car.id)}
-          style={{
-            ...S.ghostBtn,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-          }}
+          style={{ ...S.ghostBtn, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 16 }}
         >
           <Icon name={saved ? "heart" : "heart-outline"} size={18} color={RED} />
-          {saved ? "Saved" : "Save Car"}
+          {saved ? "Saved to Wishlist" : "Save Car"}
         </button>
-
       </div>
     </div>
   );
@@ -518,166 +761,117 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
   const [err, setErr] = useState("");
   const [uploading, setUploading] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
   const handleImageUpload = async (e) => {
-  const files = Array.from(e.target.files);
-
-  if (form.images.length + files.length > 7) {
-    return setErr("Maximum 7 images allowed");
-  }
-
-  setUploading(true); // 🔥 start upload
-
-  let uploadedUrls = [];
-
-  for (let file of files) {
-    const fileName = `${Date.now()}-${file.name}`;
-
-    const { error } = await supabase.storage
-      .from("cars")
-      .upload(fileName, file);
-
-    if (error) {
-      setUploading(false);
-      return setErr("Upload failed");
+    const files = Array.from(e.target.files);
+    if (form.images.length + files.length > 7) return setErr("Maximum 7 images allowed");
+    setUploading(true);
+    let uploadedUrls = [];
+    for (let file of files) {
+      const fileName = `${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage.from("cars").upload(fileName, file);
+      if (error) { setUploading(false); return setErr("Upload failed"); }
+      const { data } = supabase.storage.from("cars").getPublicUrl(fileName);
+      uploadedUrls.push(data.publicUrl);
     }
+    console.log("Uploaded URLs:", uploadedUrls);
+    setForm((prev) => ({ ...prev, images: [...prev.images, ...uploadedUrls] }));
+    e.target.value = "";
+    setUploading(false);
+  };
 
-    const { data } = supabase.storage
-      .from("cars")
-      .getPublicUrl(fileName);
-
-    uploadedUrls.push(data.publicUrl);
-  }
-  
-  console.log("Uploaded URLs:", uploadedUrls);
- setForm((prev) => ({
-   ...prev,
-   images:[...prev.images, ...uploadedUrls],
- }));
-e.target.value = "";
-setUploading(false);
-
-
-
-  console.log("Uploaded URLs:", uploadedUrls);
-
-  
-
-  setUploading(false); // 🔥 done upload
-};
   const removeImg = (i) => setForm((f) => ({ ...f, images: f.images.filter((_, idx) => idx !== i) }));
- const save = async () => {
-  if (form.images.length === 0) {return setErr("Please upload at least one image.");}
-  setErr("");
 
-  console.log("FINAL IMAGES BEING SAVED:", form.images);
+  const save = async () => {
+    if (form.images.length === 0) return setErr("Please upload at least one image.");
+    setErr("");
+    console.log("FINAL IMAGES BEING SAVED:", form.images);
+    if (!form.carName || !form.price || !form.location || !form.description) return setErr("Please fill all required fields.");
 
-  if (!form.carName || !form.price || !form.location || !form.description) {
-    return setErr("Please fill all required fields.");
-  }
+    if (carToEdit) {
+      const { error } = await supabase.from("cars").update({ carName: form.carName, brand: form.brand, price: Number(form.price), location: form.location, condition: form.condition, description: form.description, images: form.images }).eq("id", carToEdit.id);
+      if (error) return setErr(error.message);
+    } else {
+      console.log("FORM IMAGES BEFORE SAVE:", form.images);
+      const { data, error } = await supabase.from("cars").insert([{ carName: form.carName, brand: form.brand, price: Number(form.price), location: form.location, condition: form.condition, description: form.description, images: form.images, owner_id: user.id, owner_phone: user.phone, featured: false }]).select();
+      console.log("INSERT DATA:", data);
+      console.log("INSERT ERROR:", error);
+      if (error) return setErr(error.message);
+    }
+    await onSave();
+    onClose();
+  };
 
-  // EDIT CAR
-  if (carToEdit) {
-    const { error } = await supabase
-      .from("cars")
-      .update({
-        carName: form.carName,
-        brand: form.brand,
-        price: Number(form.price),
-        location: form.location,
-        condition: form.condition,
-        description: form.description,
-        images: form.images
-      })
-      .eq("id", carToEdit.id);
-
-    if (error) return setErr(error.message);
-  }
-
-  // NEW CAR
-  else {
-    console.log("FORM IMAGES BEFORE SAVE:", form.images);
-      const { data, error } = await supabase
-      .from("cars")
-      .insert([
-        {
-          carName: form.carName,
-          brand: form.brand,
-          price: Number(form.price),
-          location: form.location,
-          condition: form.condition,
-          description: form.description,
-          images: form.images,
-          owner_id: user.id,
-          owner_phone: user.phone,
-          featured: false,
-        },
-      ])
-      .select(); // 🔥 IMPORTANT
-
-    console.log("INSERT DATA:", data);
-    console.log("INSERT ERROR:", error);
-
-    if (error) return setErr(error.message); 
-  }
-
-  await onSave();
-  onClose();
-};
-    
   return (
     <div style={S.modalOverlay}>
-      <div style={{ ...S.modal, maxHeight: "90vh" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <h2 style={{ ...S.modalTitle, margin: 0, fontSize: 18 }}>{carToEdit ? "Edit Listing" : "Post a Car"}</h2>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><Icon name="close" size={22} color="#555" /></button>
+      <div style={{ ...S.modal, maxHeight: "92vh" }}>
+        <div style={S.modalHandle} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+          <h2 style={{ ...S.modalTitle, margin: 0 }}>{carToEdit ? "Edit Listing" : "Post a Car"}</h2>
+          <button onClick={onClose} style={{ background: "#F3F4F6", border: "none", borderRadius: 10, padding: 8, cursor: "pointer", display: "flex" }}>
+            <Icon name="close" size={20} color={MUTED} />
+          </button>
         </div>
+
         <label style={S.label}>Car Name *</label>
         <input style={S.input} placeholder="e.g. Toyota Noah 2018" value={form.carName} onChange={set("carName")} />
+
         <label style={S.label}>Brand *</label>
         <select style={S.select} value={form.brand} onChange={set("brand")}>
           {BRANDS.filter(b => b !== "All").map(b => <option key={b}>{b}</option>)}
         </select>
+
         <label style={S.label}>Price (UGX) *</label>
         <input style={S.input} type="number" placeholder="e.g. 45000000" value={form.price} onChange={set("price")} />
+
         <label style={S.label}>Location *</label>
         <input style={S.input} placeholder="e.g. Kampala, Nakawa" value={form.location} onChange={set("location")} />
+
         <label style={S.label}>Condition</label>
         <select style={S.select} value={form.condition} onChange={set("condition")}>
           {["New", "Used", "Foreign Used", "Local Used"].map(c => <option key={c}>{c}</option>)}
         </select>
+
         <label style={S.label}>Description *</label>
-        <textarea style={S.textarea} placeholder="Describe the car..." value={form.description} onChange={set("description")} />
-        <label style={S.label}>Images (paste URL, max 7)</label>
-        <input
-  type="file"
-  accept="image/*"
-  multiple
-  onChange={handleImageUpload}
-  style={{ marginBottom: 12 }}
-/>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-          {form.images.map((img, i) => (
-            <div key={i} style={{ position: "relative" }}>
-              <img src={img} alt="" style={{ width: 60, height: 50, objectFit: "cover", borderRadius: 8 }} />
-              <button onClick={() => removeImg(i)} style={{ position: "absolute", top: -4, right: -4, background: RED, border: "none", borderRadius: 10, width: 16, height: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="close" size={10} color={WHITE} /></button>
-            </div>
-          ))}
-        </div>
-        {err && <p style={S.errorTxt}>{err}</p>}
-        <button
-          style={S.primaryBtn}
-          onClick={save}
-          disabled={uploading}
-        >
-          {uploading ? "Uploading images..." : "Post Car"}
+        <textarea style={S.textarea} placeholder="Describe the car…" value={form.description} onChange={set("description")} />
+
+        <label style={S.label}>Photos (max 7)</label>
+        <label style={{ display: "block", background: "#F9FAFB", border: `2px dashed ${BORDER}`, borderRadius: 12, padding: "16px", textAlign: "center", cursor: "pointer", marginBottom: 12 }}>
+          <input type="file" accept="image/*" multiple onChange={handleImageUpload} style={{ display: "none" }} />
+          <Icon name="photo" size={24} color={MUTED} />
+          <p style={{ margin: "6px 0 0", fontSize: 13, color: MUTED, fontWeight: 600 }}>
+            {uploading ? "Uploading…" : "Tap to upload images"}
+          </p>
+          <p style={{ margin: "2px 0 0", fontSize: 11, color: "#C4C4C4" }}>{form.images.length}/7 photos added</p>
+        </label>
+
+        {form.images.length > 0 && (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+            {form.images.map((img, i) => (
+              <div key={i} style={{ position: "relative" }}>
+                <img src={img} alt="" style={{ width: 70, height: 56, objectFit: "cover", borderRadius: 10, border: `2px solid ${BORDER}` }} />
+                <button onClick={() => removeImg(i)} style={{ position: "absolute", top: -5, right: -5, background: RED, border: "none", borderRadius: 10, width: 18, height: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon name="close" size={10} color={WHITE} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {err && (
+          <div style={{ background: "#FFF0F0", borderRadius: 10, padding: "10px 12px", marginBottom: 12 }}>
+            <p style={{ ...S.errorTxt, margin: 0 }}>{err}</p>
+          </div>
+        )}
+
+        <button style={{ ...S.primaryBtn, opacity: uploading ? 0.7 : 1 }} onClick={save} disabled={uploading}>
+          {uploading ? "Uploading images…" : carToEdit ? "Save Changes" : "Post Car"}
         </button>
         <button style={S.ghostBtn} onClick={onClose}>Cancel</button>
       </div>
     </div>
   );
 };
-
-
 
 // ── FILTER PANEL ───────────────────────────────────────────────────────────────
 const FilterPanel = ({ filters, onChange, onClose }) => {
@@ -686,9 +880,12 @@ const FilterPanel = ({ filters, onChange, onClose }) => {
   return (
     <div style={S.modalOverlay}>
       <div style={S.modal}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <h2 style={{ ...S.modalTitle, margin: 0, fontSize: 18 }}>Filter Cars</h2>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><Icon name="close" size={22} color="#555" /></button>
+        <div style={S.modalHandle} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+          <h2 style={{ ...S.modalTitle, margin: 0 }}>Filter Cars</h2>
+          <button onClick={onClose} style={{ background: "#F3F4F6", border: "none", borderRadius: 10, padding: 8, cursor: "pointer", display: "flex" }}>
+            <Icon name="close" size={20} color={MUTED} />
+          </button>
         </div>
         <label style={S.label}>Brand</label>
         <select style={S.select} value={f.brand} onChange={set("brand")}>
@@ -705,7 +902,7 @@ const FilterPanel = ({ filters, onChange, onClose }) => {
         <label style={S.label}>Max Price (UGX)</label>
         <input style={S.input} type="number" placeholder="No limit" value={f.maxPrice} onChange={set("maxPrice")} />
         <button style={S.primaryBtn} onClick={() => { onChange(f); onClose(); }}>Apply Filters</button>
-        <button style={S.ghostBtn} onClick={() => { const reset = { brand: "All", condition: "Any Condition", location: "", minPrice: "", maxPrice: "" }; onChange(reset); onClose(); }}>Reset</button>
+        <button style={S.ghostBtn} onClick={() => { const reset = { brand: "All", condition: "Any Condition", location: "", minPrice: "", maxPrice: "" }; onChange(reset); onClose(); }}>Reset Filters</button>
       </div>
     </div>
   );
@@ -713,33 +910,23 @@ const FilterPanel = ({ filters, onChange, onClose }) => {
 
 // ── MAIN APP ───────────────────────────────────────────────────────────────────
 export default function CarFlixApp() {
-  window.onerror = function (msg, url, line, col, error) {
-  alert("ERROR: " + msg);
-};
+  window.onerror = function (msg, url, line, col, error) { alert("ERROR: " + msg); };
+
   const [showTerms, setShowTerms] = useState(false);
-  const [pendingUser, setPendingUser] = useState(null)
+  const [pendingUser, setPendingUser] = useState(null);
   const [user, setUser] = useState(null);
   console.log("CURRENT USER:", user);
   const [showAuth, setShowAuth] = useState(false);
   const [tab, setTab] = useState("home");
   const [cars, setCars] = useState([]);
- const deleteCar = async (id) => {
-  // 🔒 confirm before deleting
-  if (!window.confirm("Are you sure you want to delete this car?")) return;
 
-  const { error } = await supabase
-    .from("cars")
-    .delete()
-    .eq("id", id);
+  const deleteCar = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this car?")) return;
+    const { error } = await supabase.from("cars").delete().eq("id", id);
+    if (error) { alert(error.message); return; }
+    await refresh();
+  };
 
-  if (error) {
-    alert(error.message);
-    return;
-  }
-
-  await refresh(); // 🔥 VERY IMPORTANT
-};
-  
   const [savedIds, setSavedIds] = useState([]);
   const [search, setSearch] = useState("");
   const [brandFilter, setBrandFilter] = useState("All");
@@ -751,49 +938,47 @@ export default function CarFlixApp() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [showWaPicker, setShowWaPicker] = useState(false);
   const [waCarContext, setWaCarContext] = useState(null);
+
+  // Inject font
   useEffect(() => {
-  const getUser = async () => {
-    const { data } = await supabase.auth.getUser();
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap";
+    document.head.appendChild(link);
+    return () => { try { document.head.removeChild(link); } catch (_) {} };
+  }, []);
 
-    if (data?.user) {
-      const { data: profile } = await supabase
-        .from("users")
-        .select("*")
-        .eq("id", data.user.id)
-        .single();
-
+  useEffect(() => {
+    const getUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        const { data: profile } = await supabase.from("users").select("*").eq("id", data.user.id).single();
         console.log("FETCHED PROFILE", profile);
+        setUser(profile);
+      }
+    };
+    getUser();
+  }, []);
 
-      setUser(profile);
-    }
-  };
-
-  getUser();
-}, []);
-useEffect(() => {
-  const fetchCars = async () => {
-    const { data } = await supabase.from("cars").select("*");
-    console.log("RAW CARS FROM DB:", data);
-    setCars(data || []);
-  };
-
-  fetchCars();
-}, []);
+  useEffect(() => {
+    const fetchCars = async () => {
+      const { data } = await supabase.from("cars").select("*");
+      console.log("RAW CARS FROM DB:", data);
+      setCars(data || []);
+    };
+    fetchCars();
+  }, []);
 
   const openWa = (car = null) => { setWaCarContext(car); setShowWaPicker(true); };
 
-const refresh = async () => {
-  const { data, error } = await supabase.from("cars").select("*");
+  const refresh = async () => {
+    const { data, error } = await supabase.from("cars").select("*");
+    console.log("FETCH RESULT:", data);
+    console.log("FETCH ERROR:", error);
+    if (error) alert("Fetch error: " + error.message);
+    setCars(data || []);
+  };
 
-console.log("FETCH RESULT:", data);
-console.log("FETCH ERROR:", error);
-
-if (error) {
-  alert("Fetch error: " + error.message);
-}
-
-setCars(data || []);
-};
   const toggleSave = (id) => {
     if (!user) return setShowAuth(true);
     const s = savedIds.includes(id) ? savedIds.filter(x => x !== id) : [...savedIds, id];
@@ -802,34 +987,21 @@ setCars(data || []);
   };
 
   const login = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-  });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return alert(error.message);
+    const { data: profile } = await supabase.from("users").select("*").eq("id", data.user.id).single();
+    setUser(profile);
+    setShowAuth(false);
+  };
 
-  if (error) return alert(error.message);
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setSavedIds([]);
+    setTab("home");
+  };
 
-  const { data: profile } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", data.user.id)
-    .single();
-
-  setUser(profile);
-
-  setShowAuth(false); // ✅ closes modal
-};
-const logout = async () => {
-  await supabase.auth.signOut();
-  setUser(null);
-  setSavedIds([]);
-  setTab("home");
-};
-const acceptTerms = () => {
-  setShowTerms(false);
-};
-
-  
+  const acceptTerms = () => { setShowTerms(false); };
 
   const filtered = cars.filter(c => {
     const q = search.toLowerCase();
@@ -841,303 +1013,414 @@ const acceptTerms = () => {
     if (filters.minPrice && c.price < Number(filters.minPrice)) return false;
     if (filters.maxPrice && c.price > Number(filters.maxPrice)) return false;
     if (c.featured) return false;
-
     return true;
   });
-  const featuredCars = cars.filter(car => car.featured);
 
+  const featuredCars = cars.filter(car => car.featured);
   const savedCars = cars.filter(c => savedIds.includes(c.id));
   const myCars = user ? cars.filter(c => c.owner_id === user.id) : [];
-  if (selectedCar) return <CarDetail car={selectedCar} user={user} onBack={() => setSelectedCar(null)} savedIds={savedIds} onToggleSave={toggleSave} />;
 
+  if (selectedCar) return (
+    <CarDetail car={selectedCar} user={user} onBack={() => setSelectedCar(null)} savedIds={savedIds} onToggleSave={toggleSave} />
+  );
+
+  // ── Car card (grid)
   const CarCard = ({ car }) => (
     <div style={S.card}>
       <div style={{ position: "relative" }}>
         {Array.isArray(car.images) && car.images.length > 0 ? (
-  <img src={car.images[0]} alt={car.carName} style={S.cardImg} />
-) : (
-  <div style={S.noPhoto}>
-    <Icon name="photo" size={28} color="#CCC" />
-    <span>No photo</span>
-  </div>
-)}
-        {car.featured && <span style={S.badge("FEATURED")}>FEATURED</span>}
+          <img src={car.images[0]} alt={car.carName} style={S.cardImg} />
+        ) : (
+          <div style={S.noPhoto}>
+            <Icon name="photo" size={28} color="#D1D5DB" />
+            <span>No photo</span>
+          </div>
+        )}
+        {car.featured && <span style={S.badge("FEATURED")}>⭐ Featured</span>}
         {car.badge && !car.featured && <span style={S.badge("NEW")}>{car.badge}</span>}
         <button onClick={() => toggleSave(car.id)} style={S.heartBtn}>
-          <Icon name={savedIds.includes(car.id) ? "heart" : "heart-outline"} size={18} color={savedIds.includes(car.id) ? RED : "#999"} />
+          <Icon name={savedIds.includes(car.id) ? "heart" : "heart-outline"} size={17} color={savedIds.includes(car.id) ? RED : "#9CA3AF"} />
         </button>
       </div>
       <div style={S.cardBody}>
         <p style={S.cardName}>{car.carName}</p>
         <p style={S.cardPrice}>{formatPrice(car.price)}</p>
-        <div style={S.cardLoc}><Icon name="location" size={13} color="#AAA" />{car.location}</div>
+        <div style={S.cardLoc}><Icon name="location" size={12} color="#C4C4C4" />{car.location}</div>
         <div style={S.cardBtns}>
-          <button style={S.viewBtn} onClick={() => setSelectedCar(car)}><Icon name="eye" size={14} color={RED} />View</button>
-          <button style={S.saveBtn} onClick={() => toggleSave(car.id)}><Icon name={savedIds.includes(car.id) ? "heart" : "heart-outline"} size={14} color={WHITE} />Save</button>
+          <button style={S.viewBtn} onClick={() => setSelectedCar(car)}>
+            <Icon name="eye" size={13} color={RED} />View
+          </button>
+          <button style={S.saveBtn} onClick={() => toggleSave(car.id)}>
+            <Icon name={savedIds.includes(car.id) ? "heart" : "heart-outline"} size={13} color={WHITE} />Save
+          </button>
         </div>
       </div>
     </div>
   );
 
-return (
-  <BrowserRouter>
-    <Routes>
-
-      {/* MAIN APP */}
-      <Route
-        path="/"
-        element={
-          <div>
-             <div style={S.app}>
-                            {showAuth && <AuthModal onClose={() => setShowAuth(false)} onLogin={login} setShowTerms={setShowTerms} setPendingUser={setPendingUser} />}
-                            {showTerms && <TermsModal onAccept={acceptTerms} onDecline={() => setShowTerms(false)} />}  
-                            {showFilter && <FilterPanel filters={filters} onChange={f => { setFilters(f); if (f.brand !== "All") setBrandFilter(f.brand); }} onClose={() => setShowFilter(false)} />}
-                            {(showPost || editCar) && user && <PostCarModal user={user} carToEdit={editCar} onClose={() => { setShowPost(false); setEditCar(null); }} onSave={async () => { await refresh(); setShowPost(false); setEditCar(null); }} />}
-                            {showWaPicker && <WaPickerModal car={waCarContext} onClose={() => setShowWaPicker(false)} />}
-                            {/* HEADER */}
-                            <div style={S.header}>
-                              <div style={S.logo}>
-                                <div style={S.logoBox}><Icon name="admin" size={22} color={RED} /></div>
-                                <div><div style={S.logoText}>CAR-FLIX</div><div style={S.logoSub}>UGANDA</div></div>
-                              </div>
-                              <div style={S.headerIcons}>
-                                <button style={S.iconBtn} onClick={() => setShowFilter(true)}><Icon name="filter" size={20} color={WHITE} /></button>
-                                <button style={S.iconBtn} onClick={() => user ? logout() : setShowAuth(true)}>
-                                  <Icon name={user ? "logout" : "user"} size={20} color={WHITE} />
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* HOME TAB */}
-                            {tab === "home" && (
-                              <>
-                                {/* SEARCH */}
-                                <div style={S.searchBar}>
-                                  <div style={S.searchRow}>
-                                    <div style={{ position: "relative", flex: 1, minWidith: 0 }}>
-                                      <div style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}><Icon name="search" size={18} color="#AAA" /></div>
-                                      <input style={S.searchInput} placeholder="Search cars, price, or location..." value={search} onChange={e => setSearch(e.target.value)} />
-                                    </div>
-                                    <button style={S.searchBtn} onClick={() => {}}>Search</button>
-                                  </div>
-                                  <div style={S.filterRow}>
-                                    {BRANDS.map(b => (
-                                      <button key={b} style={S.filterChip(brandFilter === b)} onClick={() => { setBrandFilter(b); setFilters(f => ({ ...f, brand: b })); }}>
-                                        {b}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-
-                                {/* LISTINGS */}
-                                <div style={S.section}>
-                                  <div style={S.sectionRow}>
-                                    <span style={S.sectionTitle}>{filtered.length} Car{filtered.length !== 1 ? "s" : ""} Available</span>
-                                    <button style={S.browseAll} onClick={() => { setSearch(""); setBrandFilter("All"); setFilters({ brand: "All", condition: "Any Condition", location: "", minPrice: "", maxPrice: "" }); }}>Browse all listings</button>
-                                  </div>
-                                  {/* FEATURED CARS */}
-{featuredCars.length > 0 && (
-  <div style={{ marginBottom: 24 }}>
-    
-    <h2 style={{
-      color: "#fff",
-      marginBottom: 14,
-      fontSize: 22,
-      fontWeight: 700
-    }}>
-      ⭐ Featured Cars
-    </h2>
-
-    <div style={S.grid}>
-      {featuredCars.map(car => (
-        <CarCard key={car.id} car={car} />
-      ))}
-    </div>
-
-  </div>
-)}
-                                  {filtered.length === 0 ? (
-                                    <div style={{ textAlign: "center", padding: "40px 0", color: "#AAA" }}>
-                                      <Icon name="search" size={40} color="#DDD" />
-                                      <p style={{ marginTop: 12 }}>No cars found. Try a different search.</p>
-                                    </div>
-                                  ) : (
-                                    <div style={S.grid}>
-                                      {filtered.map(car => <CarCard key={car.id} car={car} />)}
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* POST FAB */}
-                                {user && (
-                                  <button style={S.postFab} onClick={() => setShowPost(true)} title="Post a car">
-                                    <Icon name="plus" size={26} color={WHITE} />
-                                  </button>
-                                )}
-                                {!user && (
-                                  <button style={{ ...S.postFab, background: "#888" }} onClick={() => setShowAuth(true)} title="Sign in to post">
-                                    <Icon name="plus" size={26} color={WHITE} />
-                                  </button>
-                                )}
-                              </>
-                            )}
-
-                            {/* SAVED TAB */}
-                            {tab === "saved" && (
-                              <div style={S.section}>
-                                <div style={{ ...S.sectionRow, paddingTop: 4 }}>
-                                  <span style={S.sectionTitle}>Saved Cars</span>
-                                </div>
-                                {!user ? (
-                                  <div style={{ textAlign: "center", padding: "40px 16px" }}>
-                                    <Icon name="heart" size={48} color="#EEE" />
-                                    <p style={{ color: "#AAA", marginTop: 12 }}>Sign in to see your saved cars</p>
-                                    <button style={{ ...S.primaryBtn, width: "auto", padding: "12px 32px", margin: "12px auto 0", display: "block" }} onClick={() => setShowAuth(true)}>Sign In</button>
-                                  </div>
-                                ) : savedCars.length === 0 ? (
-                                  <div style={{ textAlign: "center", padding: "40px 0", color: "#AAA" }}>
-                                    <Icon name="heart-outline" size={48} color="#DDD" />
-                                    <p style={{ marginTop: 12 }}>No saved cars yet.<br />Tap the heart icon to save.</p>
-                                  </div>
-                                ) : (
-                                  <div style={S.grid}>{savedCars.map(car => <CarCard key={car.id} car={car} />)}</div>
-                                )}
-                              </div>
-                            )}
-
-                            {/* ADMIN TAB */}
-                            {tab === "admin" && (
-                              <div style={S.section}>
-                                <div style={{ ...S.sectionRow, paddingTop: 4 }}>
-                                  <span style={S.sectionTitle}>My Listings</span>
-                                </div>
-                                {!user ? (
-                                  <div style={{ textAlign: "center", padding: "40px 16px" }}>
-                                    <Icon name="lock" size={48} color="#EEE" />
-                                  <span style={{ color: "#AAA", marginTop: 12 }}>Sign in to manage your listings</span>
-                                    <button style={{ ...S.primaryBtn, width: "auto", padding: "12px 32px", margin: "12px auto 0", display: "block" }} onClick={() => setShowAuth(true)}>Sign In</button>
-                                  </div>
-                                ) : (
-                                  <>
-                                    <button style={{ ...S.primaryBtn, background: RED, marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={() => setShowPost(true)}>
-                                      <Icon name="plus" size={18} color={WHITE} /> Post New Car
-                                    </button>
-                                    {myCars.length === 0 ? (
-                                      <div style={{ textAlign: "center", padding: "20px 0", color: "#AAA" }}>
-                                        <p>You have no active listings.</p>
-                                      </div>
-                                    ) : myCars.map(car => (
-                                      <div key={car.id} style={{ background: WHITE, borderRadius: 12, padding: 14, marginBottom: 10, display: "flex", gap: 12, alignItems: "center" }}>
-                                        {car.images?.length > 0 && car.images[0] ? (
-                                          <img
-                                            src={car.images[0]}
-                                            alt=""
-                                            style={{
-                                              width: 64,
-                                              height: 52,
-                                              borderRadius: 8,
-                                              objectFit: "cover",
-                                              flexShrink: 0,
-                                            }}
-                                          />
-                                        ) : (
-                                          <div
-                                            style={{
-                                              width: 64,
-                                              height: 52,
-                                              borderRadius: 8,
-                                              background: "#F0F0F0",
-                                              display: "flex",
-                                              alignItems: "center",
-                                              justifyContent: "center",
-                                            }}
-                                          >
-                                            <Icon name="photo" size={24} color="#CCC" />
-                                          </div>
-                                        )}
-                                        <div style={{ flex: 1, minWidth: 0 }}>
-                                          <p style={{ fontWeight: 700, fontSize: 14, margin: "0 0 2px", color: "#1A1A1A" }}>{car.carName}</p>
-                                          <p style={{ color: RED, fontWeight: 700, fontSize: 13, margin: "0 0 2px" }}>{formatPrice(car.price)}</p>
-                                          <p style={{ color: "#888", fontSize: 12, margin: 0 }}>{car.location}</p>
-                                        </div>
-                                        <div style={{ display: "flex", gap: 6 }}>
-                                          <button onClick={() => setEditCar(car)} style={{ background: "#E3F2FD", border: "none", borderRadius: 8, padding: 8, cursor: "pointer" }}><Icon name="edit" size={16} color="#1565C0" /></button>
-                                          <button onClick={() => deleteCar(car.id)}  style={{ background: "#FFEBEE", border: "none", borderRadius: 8, padding: 8, cursor: "pointer" }}><Icon name="delete" size={16} color={RED} /></button>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </>
-                                )}
-                              </div>
-                            )}
-
-                            {/* ABOUT TAB */}
-                            {tab === "about" && (
-                              <div style={{ padding: 16 }}>
-                                <div style={{ background: RED, borderRadius: 16, padding: 24, marginBottom: 16, textAlign: "center" }}>
-                                  <div style={{ ...S.logoBox, width: 56, height: 56, margin: "0 auto 12px", borderRadius: 14 }}><Icon name="admin" size={32} color={RED} /></div>
-                                  <h2 style={{ color: WHITE, fontWeight: 900, fontSize: 26, margin: "0 0 4px", letterSpacing: 2 }}>CAR-FLIX</h2>
-                                  <p style={{ color: "rgba(255,255,255,0.7)", margin: 0, fontSize: 13, letterSpacing: 3 }}>UGANDA</p>
-                                </div>
-                                <div style={{ background: WHITE, borderRadius: 14, padding: 18, marginBottom: 12 }}>
-                                  <h3 style={{ fontWeight: 800, fontSize: 16, color: "#1A1A1A", marginTop: 0 }}>About CAR-FLIX</h3>
-                                  <p style={{ color: "#555", fontSize: 14, lineHeight: 1.7, margin: 0 }}>CAR-FLIX is a third-party marketplace connecting car sellers with buyers across Africa. We are not responsible for negotiations, payments, or transaction outcomes between buyers and sellers.</p>
-                                </div>
-                                <div style={{ background: WHITE, borderRadius: 14, padding: 18, marginBottom: 12 }}>
-                                  <h3 style={{ fontWeight: 800, fontSize: 16, color: "#1A1A1A", marginTop: 0 }}>Contact Us</h3>
-                                  <p style={{ color: "#777", fontSize: 13, marginBottom: 14 }}>Reach our team on any of these WhatsApp lines:</p>
-                                  {WA_NUMBERS.map((wa, i) => (
-                                    <button key={i} onClick={() => {
-                                                      const msg = "Hello, I'm requesting for help with the app";
-                                                      const url = `https://wa.me/${wa.number}?text=${encodeURIComponent(msg)}`;
-                                                      window.location.href = url;
-                                                    }}
-                                      style={{ ...S.primaryBtn, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 10, background: i === 0 ? "#2E7D32" : i === 1 ? "#1565C0" : "#E65100" }}>
-                                      <Icon name="whatsapp" size={18} color={WHITE} /> {wa.label}: {wa.display}
-                                    </button>
-                                  ))}
-                                </div>
-                                {user && (
-                                  <div style={{ background: WHITE, borderRadius: 14, padding: 18 }}>
-                                    <h3 style={{ fontWeight: 800, fontSize: 16, color: "#1A1A1A", marginTop: 0 }}>Account</h3>
-                                    <p style={{ color: "#555", fontSize: 14, marginBottom: 4 }}>Signed in as <strong>{user.username}</strong></p>
-                                    <p style={{ color: "#888", fontSize: 13, marginBottom: 14 }}>{user.phone}</p>
-                                    <button style={{ ...S.ghostBtn, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={logout}>
-                                      <Icon name="logout" size={18} color={RED} /> Sign Out
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-
-                            {/* BOTTOM NAV */}
-                            <div style={S.bottomNav}>
-                              {[
-                                { id: "home", icon: "home", label: "Home" },
-                                { id: "saved", icon: "heart", label: "Saved" },
-                                { id: "admin", icon: "lock", label: "My Cars" },
-                                { id: "about", icon: "info", label: "About" },
-                              ].map(n => (
-                                <button key={n.id} style={S.navItem(tab === n.id)} onClick={() => setTab(n.id)}>
-                                  <Icon name={tab === n.id && n.id === "saved" ? "heart" : n.icon} size={22} color={tab === n.id ? RED : "#999"} />
-                                  {n.label}
-                                </button>
-                              ))}
-                            </div>
-                              </div>
+  // ── Featured card (horizontal scroll)
+  const FeaturedCard = ({ car }) => (
+    <div
+      onClick={() => setSelectedCar(car)}
+      style={{
+        minWidth: 210,
+        maxWidth: 210,
+        background: CARD,
+        borderRadius: 18,
+        overflow: "hidden",
+        boxShadow: "0 4px 18px rgba(0,0,0,0.1)",
+        border: `1px solid ${BORDER}`,
+        flexShrink: 0,
+        cursor: "pointer",
+      }}
+    >
+      <div style={{ position: "relative" }}>
+        {Array.isArray(car.images) && car.images.length > 0 ? (
+          <img src={car.images[0]} alt={car.carName} style={{ width: "100%", height: 140, objectFit: "cover", display: "block" }} />
+        ) : (
+          <div style={{ height: 140, background: "#F3F4F6", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6 }}>
+            <Icon name="photo" size={32} color="#D1D5DB" />
+            <span style={{ fontSize: 11, color: "#C4C4C4" }}>No photo</span>
           </div>
-        }
-      />
+        )}
+        {/* Gold featured badge */}
+        <div style={{ position: "absolute", top: 10, left: 10, background: GOLD, color: WHITE, fontSize: 10, fontWeight: 800, padding: "4px 10px", borderRadius: 8, letterSpacing: 0.3 }}>
+          ⭐ FEATURED
+        </div>
+        {/* Save button */}
+        <button
+          onClick={(e) => { e.stopPropagation(); toggleSave(car.id); }}
+          style={{ position: "absolute", top: 8, right: 8, background: "rgba(255,255,255,0.95)", border: "none", borderRadius: 20, padding: "6px", cursor: "pointer", display: "flex", boxShadow: "0 1px 5px rgba(0,0,0,0.2)" }}
+        >
+          <Icon name={savedIds.includes(car.id) ? "heart" : "heart-outline"} size={16} color={savedIds.includes(car.id) ? RED : "#9CA3AF"} />
+        </button>
+      </div>
+      <div style={{ padding: "12px 14px 14px" }}>
+        <p style={{ fontWeight: 800, fontSize: 13, color: TEXT, margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{car.carName}</p>
+        <p style={{ color: RED, fontWeight: 900, fontSize: 15, margin: "0 0 6px" }}>{formatPrice(car.price)}</p>
+        <div style={{ display: "flex", alignItems: "center", gap: 4, color: MUTED, fontSize: 11, marginBottom: 12 }}>
+          <Icon name="location" size={12} color={MUTED} />{car.location}
+        </div>
+        <button
+          onClick={(e) => { e.stopPropagation(); setSelectedCar(car); }}
+          style={{ width: "100%", background: RED, color: WHITE, border: "none", borderRadius: 10, padding: "9px 0", fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}
+        >
+          View Details
+        </button>
+      </div>
+    </div>
+  );
 
-      {/* ADMIN DASHBOARD */}
-      <Route
-        path="/admin"
-        element={
-          <AdminDashboard user={user} cars={cars}  setCars={setCars} deleteCar={deleteCar} />
-        }
-      />
+  return (
+    <BrowserRouter>
+      <Routes>
 
-    </Routes>
-  </BrowserRouter>
-); 
+        {/* MAIN APP */}
+        <Route
+          path="/"
+          element={
+            <div>
+              <div style={S.app}>
+                {/* Modals */}
+                {showAuth && <AuthModal onClose={() => setShowAuth(false)} onLogin={login} setShowTerms={setShowTerms} setPendingUser={setPendingUser} />}
+                {showTerms && <TermsModal onAccept={acceptTerms} onDecline={() => setShowTerms(false)} />}
+                {showFilter && <FilterPanel filters={filters} onChange={f => { setFilters(f); if (f.brand !== "All") setBrandFilter(f.brand); }} onClose={() => setShowFilter(false)} />}
+                {(showPost || editCar) && user && <PostCarModal user={user} carToEdit={editCar} onClose={() => { setShowPost(false); setEditCar(null); }} onSave={async () => { await refresh(); setShowPost(false); setEditCar(null); }} />}
+                {showWaPicker && <WaPickerModal car={waCarContext} onClose={() => setShowWaPicker(false)} />}
+
+                {/* HEADER */}
+                <div style={S.header}>
+                  <div style={S.logo}>
+                    <div style={S.logoBox}><Icon name="admin" size={22} color={WHITE} /></div>
+                    <div>
+                      <div style={S.logoText}>CAR-FLIX</div>
+                      <div style={S.logoSub}>UGANDA</div>
+                    </div>
+                  </div>
+                  <div style={S.headerIcons}>
+                    <button style={S.iconBtn} onClick={() => setShowFilter(true)}>
+                      <Icon name="filter" size={20} color={WHITE} />
+                    </button>
+                    <button style={S.iconBtn} onClick={() => user ? logout() : setShowAuth(true)}>
+                      <Icon name={user ? "logout" : "user"} size={20} color={WHITE} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* HOME TAB */}
+                {tab === "home" && (
+                  <>
+                    {/* Search */}
+                    <div style={S.searchBar}>
+                      <div style={S.searchRow}>
+                        <div style={{ position: "relative", flex: 1 }}>
+                          <div style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", zIndex: 1 }}>
+                            <Icon name="search" size={18} color="#C4C4C4" />
+                          </div>
+                          <input
+                            style={S.searchInput}
+                            placeholder="Search cars, brand or location…"
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                          />
+                        </div>
+                        <button style={S.searchBtn} onClick={() => {}}>Search</button>
+                      </div>
+                      {/* Brand chips */}
+                      <div style={S.filterRow}>
+                        {BRANDS.map(b => (
+                          <button key={b} style={S.filterChip(brandFilter === b)} onClick={() => { setBrandFilter(b); setFilters(f => ({ ...f, brand: b })); }}>
+                            {b}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* ── FEATURED CARS – Horizontal Scroll ── */}
+                    {featuredCars.length > 0 && (
+                      <div style={{ marginTop: 20, marginBottom: 4 }}>
+                        {/* Section header */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 16px", marginBottom: 14 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <div style={{ width: 4, height: 22, background: GOLD, borderRadius: 3 }} />
+                            <span style={{ fontWeight: 900, fontSize: 17, color: TEXT }}>Featured Cars</span>
+                          </div>
+                          <span style={{ fontSize: 11, color: GOLD, fontWeight: 800, background: "#FFFBEB", border: "1px solid #FDE68A", padding: "3px 10px", borderRadius: 20 }}>
+                            HOT 🔥
+                          </span>
+                        </div>
+                        {/* Horizontal scroll track */}
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 14,
+                            overflowX: "auto",
+                            padding: "4px 16px 16px",
+                            scrollbarWidth: "none",
+                            msOverflowStyle: "none",
+                            WebkitOverflowScrolling: "touch",
+                          }}
+                        >
+                          {featuredCars.map(car => <FeaturedCard key={car.id} car={car} />)}
+                        </div>
+                        {/* Divider */}
+                        <div style={{ height: 1, background: BORDER, margin: "0 16px" }} />
+                      </div>
+                    )}
+
+                    {/* ── ALL LISTINGS ── */}
+                    <div style={S.section}>
+                      <div style={S.sectionRow}>
+                        <span style={S.sectionTitle}>
+                          {filtered.length} Car{filtered.length !== 1 ? "s" : ""} Available
+                        </span>
+                        <button style={S.browseAll} onClick={() => { setSearch(""); setBrandFilter("All"); setFilters({ brand: "All", condition: "Any Condition", location: "", minPrice: "", maxPrice: "" }); }}>
+                          Browse all
+                        </button>
+                      </div>
+                      {filtered.length === 0 ? (
+                        <div style={{ textAlign: "center", padding: "48px 0 32px", color: MUTED }}>
+                          <Icon name="search" size={44} color="#E5E7EB" />
+                          <p style={{ marginTop: 14, fontWeight: 600, fontSize: 15, color: "#9CA3AF" }}>No cars found</p>
+                          <p style={{ margin: "4px 0 0", fontSize: 13, color: "#C4C4C4" }}>Try a different search or filter</p>
+                        </div>
+                      ) : (
+                        <div style={S.grid}>
+                          {filtered.map(car => <CarCard key={car.id} car={car} />)}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* FAB */}
+                    {user ? (
+                      <button style={S.postFab} onClick={() => setShowPost(true)} title="Post a car">
+                        <Icon name="plus" size={26} color={WHITE} />
+                      </button>
+                    ) : (
+                      <button style={{ ...S.postFab, background: "#9CA3AF" }} onClick={() => setShowAuth(true)} title="Sign in to post">
+                        <Icon name="plus" size={26} color={WHITE} />
+                      </button>
+                    )}
+                  </>
+                )}
+
+                {/* SAVED TAB */}
+                {tab === "saved" && (
+                  <div style={S.section}>
+                    <div style={{ ...S.sectionRow, paddingTop: 4 }}>
+                      <span style={S.sectionTitle}>Saved Cars</span>
+                    </div>
+                    {!user ? (
+                      <div style={{ textAlign: "center", padding: "52px 24px" }}>
+                        <div style={{ width: 72, height: 72, background: "#FFF0F0", borderRadius: 36, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+                          <Icon name="heart-outline" size={34} color={RED} />
+                        </div>
+                        <p style={{ fontWeight: 700, fontSize: 16, color: TEXT, margin: "0 0 6px" }}>Sign in to see saved cars</p>
+                        <p style={{ color: MUTED, fontSize: 13, margin: "0 0 20px" }}>Your saved listings will appear here</p>
+                        <button style={{ ...S.primaryBtn, width: "auto", padding: "12px 32px", margin: "0 auto", display: "block" }} onClick={() => setShowAuth(true)}>Sign In</button>
+                      </div>
+                    ) : savedCars.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "52px 24px" }}>
+                        <div style={{ width: 72, height: 72, background: "#F3F4F6", borderRadius: 36, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+                          <Icon name="heart-outline" size={34} color="#D1D5DB" />
+                        </div>
+                        <p style={{ fontWeight: 700, fontSize: 15, color: "#9CA3AF", margin: "0 0 6px" }}>No saved cars yet</p>
+                        <p style={{ color: "#C4C4C4", fontSize: 13, margin: 0 }}>Tap the heart icon on any listing to save it</p>
+                      </div>
+                    ) : (
+                      <div style={S.grid}>{savedCars.map(car => <CarCard key={car.id} car={car} />)}</div>
+                    )}
+                  </div>
+                )}
+
+                {/* MY CARS TAB */}
+                {tab === "admin" && (
+                  <div style={S.section}>
+                    <div style={{ ...S.sectionRow, paddingTop: 4 }}>
+                      <span style={S.sectionTitle}>My Listings</span>
+                    </div>
+                    {!user ? (
+                      <div style={{ textAlign: "center", padding: "52px 24px" }}>
+                        <div style={{ width: 72, height: 72, background: "#F3F4F6", borderRadius: 36, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+                          <Icon name="lock" size={34} color="#D1D5DB" />
+                        </div>
+                        <p style={{ fontWeight: 700, fontSize: 16, color: TEXT, margin: "0 0 6px" }}>Sign in to manage listings</p>
+                        <p style={{ color: MUTED, fontSize: 13, margin: "0 0 20px" }}>Post and manage your car listings</p>
+                        <button style={{ ...S.primaryBtn, width: "auto", padding: "12px 32px", margin: "0 auto", display: "block" }} onClick={() => setShowAuth(true)}>Sign In</button>
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          style={{ ...S.primaryBtn, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 18 }}
+                          onClick={() => setShowPost(true)}
+                        >
+                          <Icon name="plus" size={18} color={WHITE} /> Post New Car
+                        </button>
+                        {myCars.length === 0 ? (
+                          <div style={{ textAlign: "center", padding: "32px 0", color: MUTED }}>
+                            <Icon name="photo" size={40} color="#E5E7EB" />
+                            <p style={{ marginTop: 12, fontWeight: 600 }}>You have no active listings.</p>
+                          </div>
+                        ) : myCars.map(car => (
+                          <div key={car.id} style={{ background: CARD, borderRadius: 14, padding: 14, marginBottom: 10, display: "flex", gap: 12, alignItems: "center", boxShadow: "0 1px 6px rgba(0,0,0,0.06)", border: `1px solid ${BORDER}` }}>
+                            {car.images?.length > 0 && car.images[0] ? (
+                              <img src={car.images[0]} alt="" style={{ width: 68, height: 56, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
+                            ) : (
+                              <div style={{ width: 68, height: 56, borderRadius: 10, background: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                <Icon name="photo" size={24} color="#D1D5DB" />
+                              </div>
+                            )}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ fontWeight: 700, fontSize: 14, margin: "0 0 2px", color: TEXT, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{car.carName}</p>
+                              <p style={{ color: RED, fontWeight: 800, fontSize: 13, margin: "0 0 2px" }}>{formatPrice(car.price)}</p>
+                              <p style={{ color: MUTED, fontSize: 12, margin: 0 }}>{car.location}</p>
+                            </div>
+                            <div style={{ display: "flex", gap: 6 }}>
+                              <button onClick={() => setEditCar(car)} style={{ background: "#EFF6FF", border: "none", borderRadius: 10, padding: 9, cursor: "pointer" }}>
+                                <Icon name="edit" size={16} color="#1D4ED8" />
+                              </button>
+                              <button onClick={() => deleteCar(car.id)} style={{ background: "#FFF0F0", border: "none", borderRadius: 10, padding: 9, cursor: "pointer" }}>
+                                <Icon name="delete" size={16} color={RED} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* ABOUT TAB */}
+                {tab === "about" && (
+                  <div style={{ padding: 16 }}>
+                    {/* Brand hero */}
+                    <div style={{ background: `linear-gradient(135deg, ${RED_DARK} 0%, ${RED} 100%)`, borderRadius: 20, padding: "28px 24px", marginBottom: 14, textAlign: "center" }}>
+                      <div style={{ width: 60, height: 60, background: "rgba(255,255,255,0.15)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px", border: "1px solid rgba(255,255,255,0.25)" }}>
+                        <Icon name="admin" size={30} color={WHITE} />
+                      </div>
+                      <h2 style={{ color: WHITE, fontWeight: 900, fontSize: 28, margin: "0 0 4px", letterSpacing: 2 }}>CAR-FLIX</h2>
+                      <p style={{ color: "rgba(255,255,255,0.65)", margin: 0, fontSize: 12, letterSpacing: 4, textTransform: "uppercase" }}>Uganda</p>
+                    </div>
+
+                    {/* About card */}
+                    <div style={{ background: CARD, borderRadius: 16, padding: 18, marginBottom: 12, boxShadow: "0 1px 6px rgba(0,0,0,0.06)", border: `1px solid ${BORDER}` }}>
+                      <h3 style={{ fontWeight: 800, fontSize: 16, color: TEXT, marginTop: 0, marginBottom: 10 }}>About CAR-FLIX</h3>
+                      <p style={{ color: MUTED, fontSize: 14, lineHeight: 1.75, margin: 0 }}>
+                        CAR-FLIX is a third-party marketplace connecting car sellers with buyers across Africa. We are not responsible for negotiations, payments, or transaction outcomes between buyers and sellers.
+                      </p>
+                    </div>
+
+                    {/* Contact card */}
+                    <div style={{ background: CARD, borderRadius: 16, padding: 18, marginBottom: 12, boxShadow: "0 1px 6px rgba(0,0,0,0.06)", border: `1px solid ${BORDER}` }}>
+                      <h3 style={{ fontWeight: 800, fontSize: 16, color: TEXT, marginTop: 0, marginBottom: 6 }}>Contact Us</h3>
+                      <p style={{ color: MUTED, fontSize: 13, marginBottom: 14 }}>Reach our team on any of these WhatsApp lines:</p>
+                      {WA_NUMBERS.map((wa, i) => {
+                        const waColors = ["#16A34A", "#1D4ED8", "#EA580C"];
+                        return (
+                          <button key={i}
+                            onClick={() => { const msg = "Hello, I'm requesting for help with the app"; window.location.href = `https://wa.me/${wa.number}?text=${encodeURIComponent(msg)}`; }}
+                            style={{ ...S.primaryBtn, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 10, background: waColors[i], borderRadius: 12 }}>
+                            <Icon name="whatsapp" size={18} color={WHITE} /> {wa.label}: {wa.display}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Account card */}
+                    {user && (
+                      <div style={{ background: CARD, borderRadius: 16, padding: 18, boxShadow: "0 1px 6px rgba(0,0,0,0.06)", border: `1px solid ${BORDER}` }}>
+                        <h3 style={{ fontWeight: 800, fontSize: 16, color: TEXT, marginTop: 0, marginBottom: 10 }}>Account</h3>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                          <div style={{ width: 44, height: 44, background: "#FFF0F0", borderRadius: 22, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Icon name="user" size={22} color={RED} />
+                          </div>
+                          <div>
+                            <p style={{ fontWeight: 700, fontSize: 15, margin: "0 0 2px", color: TEXT }}>{user.username}</p>
+                            <p style={{ color: MUTED, fontSize: 13, margin: 0 }}>{user.phone}</p>
+                          </div>
+                        </div>
+                        <button style={{ ...S.ghostBtn, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={logout}>
+                          <Icon name="logout" size={18} color={RED} /> Sign Out
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* BOTTOM NAV */}
+                <div style={S.bottomNav}>
+                  {[
+                    { id: "home", icon: "home", label: "Home" },
+                    { id: "saved", icon: "heart", label: "Saved" },
+                    { id: "admin", icon: "lock", label: "My Cars" },
+                    { id: "about", icon: "info", label: "About" },
+                  ].map(n => (
+                    <button key={n.id} style={S.navItem(tab === n.id)} onClick={() => setTab(n.id)}>
+                      {tab === n.id && <div style={S.navDot} />}
+                      <Icon
+                        name={tab === n.id && n.id === "saved" ? "heart" : n.icon}
+                        size={22}
+                        color={tab === n.id ? RED : "#9CA3AF"}
+                      />
+                      {n.label}
+                    </button>
+                  ))}
+                </div>
+
+              </div>
+            </div>
+          }
+        />
+
+        {/* ADMIN DASHBOARD */}
+        <Route
+          path="/admin"
+          element={
+            <AdminDashboard user={user} cars={cars} setCars={setCars} deleteCar={deleteCar} />
+          }
+        />
+
+      </Routes>
+    </BrowserRouter>
+  );
 }
