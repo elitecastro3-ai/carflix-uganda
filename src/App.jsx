@@ -79,7 +79,7 @@ const S = {
     maxWidth: 480,
     margin: "0 auto",
     position: "relative",
-    paddingBottom: 90,
+    paddingBottom: 100,
   },
 
   // ── Header
@@ -266,46 +266,44 @@ const S = {
     boxShadow: "0 1px 5px rgba(0,0,0,0.18)",
   },
 
-  // ── Bottom nav
+  // ── Bottom nav (floating pill style)
   bottomNav: {
     position: "fixed",
-    bottom: 0,
+    bottom: 16,
     left: "50%",
     transform: "translateX(-50%)",
-    width: "100%",
-    maxWidth: 480,
+    width: "calc(100% - 32px)",
+    maxWidth: 448,
     background: WHITE,
-    borderTop: `1px solid ${BORDER}`,
+    borderRadius: 28,
     display: "flex",
+    alignItems: "center",
     zIndex: 200,
-    boxShadow: "0 -4px 20px rgba(0,0,0,0.07)",
+    boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)",
+    padding: "8px 10px",
+    gap: 4,
+    boxSizing: "border-box",
   },
   navItem: (active) => ({
-    flex: 1,
+    flex: active ? "0 0 auto" : 1,
     display: "flex",
-    flexDirection: "column",
+    flexDirection: "row",
     alignItems: "center",
-    gap: 3,
-    padding: "11px 0 9px",
+    justifyContent: "center",
+    gap: active ? 7 : 0,
+    padding: active ? "10px 18px" : "10px 0",
     cursor: "pointer",
-    color: active ? RED : "#9CA3AF",
-    background: "none",
+    color: active ? WHITE : "#9CA3AF",
+    background: active ? RED : "transparent",
     border: "none",
-    fontSize: 10,
-    fontWeight: active ? 800 : 500,
+    borderRadius: 22,
+    fontSize: 13,
+    fontWeight: 800,
     fontFamily: "inherit",
-    position: "relative",
+    transition: "all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)",
+    whiteSpace: "nowrap",
   }),
-  navDot: {
-    position: "absolute",
-    top: 0,
-    left: "50%",
-    transform: "translateX(-50%)",
-    width: 28,
-    height: 3,
-    background: RED,
-    borderRadius: "0 0 4px 4px",
-  },
+  navDot: { display: "none" },
 
   // ── Modals
   modalOverlay: {
@@ -425,7 +423,7 @@ const S = {
   }),
   postFab: {
     position: "fixed",
-    bottom: 104,
+    bottom: 92,
     right: 18,
     background: RED,
     color: WHITE,
@@ -1394,17 +1392,19 @@ export default function CarFlixApp() {
                     { id: "saved", icon: "heart", label: "Saved" },
                     { id: "admin", icon: "lock", label: "My Cars" },
                     { id: "about", icon: "info", label: "About" },
-                  ].map(n => (
-                    <button key={n.id} style={S.navItem(tab === n.id)} onClick={() => setTab(n.id)}>
-                      {tab === n.id && <div style={S.navDot} />}
-                      <Icon
-                        name={tab === n.id && n.id === "saved" ? "heart" : n.icon}
-                        size={22}
-                        color={tab === n.id ? RED : "#9CA3AF"}
-                      />
-                      {n.label}
-                    </button>
-                  ))}
+                  ].map(n => {
+                    const active = tab === n.id;
+                    return (
+                      <button key={n.id} style={S.navItem(active)} onClick={() => setTab(n.id)}>
+                        <Icon
+                          name={active && n.id === "saved" ? "heart" : n.icon}
+                          size={active ? 18 : 22}
+                          color={active ? WHITE : "#9CA3AF"}
+                        />
+                        {active && n.label}
+                      </button>
+                    );
+                  })}
                 </div>
 
               </div>
