@@ -117,65 +117,55 @@ const S = {
     color: WHITE,
   },
 
-  // ── Search bar (modern floating card)
+  // ── Search bar (WhatsApp style)
   searchZone: {
-    background: `linear-gradient(160deg, ${RED_DARK} 0%, ${RED} 100%)`,
-    padding: "10px 16px 0",
-  },
-  searchCard: {
     background: WHITE,
-    borderRadius: "20px 20px 0 0",
-    padding: "18px 16px 0",
-    boxShadow: "0 -2px 20px rgba(0,0,0,0.06)",
+    padding: "10px 16px 0",
+    borderBottom: `1px solid ${BORDER}`,
   },
+  searchCard: { display: "none" },   // unused in this style
   searchPill: {
     display: "flex",
     alignItems: "center",
-    background: SURFACE,
-    borderRadius: 16,
-    border: `1.5px solid ${BORDER}`,
-    padding: "0 6px 0 14px",
-    gap: 8,
-    marginBottom: 14,
+    background: "#F0F2F5",
+    borderRadius: 10,
+    padding: "0 12px",
+    gap: 10,
+    marginBottom: 10,
   },
   searchInput: {
     flex: 1,
-    padding: "14px 0",
+    padding: "11px 0",
     border: "none",
     outline: "none",
     color: TEXT,
     background: "transparent",
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: "inherit",
     minWidth: 0,
   },
   searchFilterBtn: {
-    background: RED,
+    background: "none",
     border: "none",
-    borderRadius: 11,
-    padding: "9px 13px",
+    padding: "6px 4px",
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
-    gap: 6,
-    color: WHITE,
-    fontSize: 12,
-    fontWeight: 700,
-    fontFamily: "inherit",
+    color: MUTED,
     flexShrink: 0,
   },
   filterRow: {
     display: "flex",
     gap: 8,
     overflowX: "auto",
-    paddingBottom: 16,
+    paddingBottom: 10,
     scrollbarWidth: "none",
     msOverflowStyle: "none",
   },
   filterChip: (active) => ({
-    background: active ? RED : WHITE,
-    color: active ? WHITE : MUTED,
-    border: active ? "none" : `1.5px solid ${BORDER}`,
+    background: active ? "#FDE8E8" : "#F0F2F5",
+    color: active ? RED : MUTED,
+    border: "none",
     borderRadius: 24,
     padding: "7px 16px",
     fontSize: 13,
@@ -183,7 +173,7 @@ const S = {
     cursor: "pointer",
     whiteSpace: "nowrap",
     flexShrink: 0,
-    boxShadow: active ? `0 3px 12px rgba(183,28,28,0.35)` : "0 1px 3px rgba(0,0,0,0.06)",
+    boxShadow: "none",
     fontFamily: "inherit",
   }),
 
@@ -1158,41 +1148,37 @@ export default function CarFlixApp() {
                 {/* HOME TAB */}
                 {tab === "home" && (
                   <>
-                    {/* Search – modern floating card */}
+                    {/* Search – WhatsApp style */}
                     <div style={S.searchZone}>
-                      {/* Greeting row */}
-                      <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: 500, margin: "0 0 2px" }}>
-                        Find your next car 🚗
-                      </p>
-                      <p style={{ color: WHITE, fontSize: 19, fontWeight: 900, margin: "0 0 14px", letterSpacing: -0.3 }}>
-                        What are you looking for?
-                      </p>
-
-                      {/* White card that "waves" up from the red zone */}
-                      <div style={S.searchCard}>
-                        {/* Integrated search pill with filter button inside */}
-                        <div style={S.searchPill}>
-                          <Icon name="search" size={18} color={MUTED} />
-                          <input
-                            style={S.searchInput}
-                            placeholder="Car name, brand or location…"
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                          />
-                          <button style={S.searchFilterBtn} onClick={() => setShowFilter(true)}>
-                            <Icon name="filter" size={14} color={WHITE} />
-                            Filter
+                      {/* Single clean pill — icon · input · filter icon */}
+                      <div style={S.searchPill}>
+                        <Icon name="search" size={17} color="#8696A0" />
+                        <input
+                          style={S.searchInput}
+                          placeholder="Search cars…"
+                          value={search}
+                          onChange={e => setSearch(e.target.value)}
+                        />
+                        {search.length > 0 && (
+                          <button
+                            onClick={() => setSearch("")}
+                            style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", display: "flex", color: MUTED }}
+                          >
+                            <Icon name="close" size={16} color="#8696A0" />
                           </button>
-                        </div>
+                        )}
+                        <button style={S.searchFilterBtn} onClick={() => setShowFilter(true)}>
+                          <Icon name="filter" size={17} color="#8696A0" />
+                        </button>
+                      </div>
 
-                        {/* Brand chips — on the white card */}
-                        <div style={S.filterRow}>
-                          {BRANDS.map(b => (
-                            <button key={b} style={S.filterChip(brandFilter === b)} onClick={() => { setBrandFilter(b); setFilters(f => ({ ...f, brand: b })); }}>
-                              {b}
-                            </button>
-                          ))}
-                        </div>
+                      {/* Brand chips */}
+                      <div style={S.filterRow}>
+                        {BRANDS.map(b => (
+                          <button key={b} style={S.filterChip(brandFilter === b)} onClick={() => { setBrandFilter(b); setFilters(f => ({ ...f, brand: b })); }}>
+                            {b}
+                          </button>
+                        ))}
                       </div>
                     </div>
 
