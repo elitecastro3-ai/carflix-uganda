@@ -117,60 +117,73 @@ const S = {
     color: WHITE,
   },
 
-  // ── Search bar
-  searchBar: {
-    background: `linear-gradient(180deg, ${RED} 0%, ${RED_DARK} 100%)`,
-    padding: "14px 16px 18px",
+  // ── Search bar (modern floating card)
+  searchZone: {
+    background: `linear-gradient(160deg, ${RED_DARK} 0%, ${RED} 100%)`,
+    padding: "10px 16px 0",
   },
-  searchRow: { display: "flex", gap: 10, alignItems: "center" },
+  searchCard: {
+    background: WHITE,
+    borderRadius: "20px 20px 0 0",
+    padding: "18px 16px 0",
+    boxShadow: "0 -2px 20px rgba(0,0,0,0.06)",
+  },
+  searchPill: {
+    display: "flex",
+    alignItems: "center",
+    background: SURFACE,
+    borderRadius: 16,
+    border: `1.5px solid ${BORDER}`,
+    padding: "0 6px 0 14px",
+    gap: 8,
+    marginBottom: 14,
+  },
   searchInput: {
     flex: 1,
-    padding: "13px 14px 13px 44px",
-    borderRadius: 14,
+    padding: "14px 0",
     border: "none",
     outline: "none",
     color: TEXT,
-    background: WHITE,
+    background: "transparent",
     fontSize: 14,
-    boxShadow: "0 3px 10px rgba(0,0,0,0.18)",
-    width: "100%",
-    boxSizing: "border-box",
     fontFamily: "inherit",
+    minWidth: 0,
   },
-  searchBtn: {
-    background: RED_LIGHT,
-    color: WHITE,
+  searchFilterBtn: {
+    background: RED,
     border: "none",
-    borderRadius: 12,
-    padding: "12px 18px",
-    fontWeight: 700,
-    fontSize: 14,
+    borderRadius: 11,
+    padding: "9px 13px",
     cursor: "pointer",
-    flexShrink: 0,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    color: WHITE,
+    fontSize: 12,
+    fontWeight: 700,
     fontFamily: "inherit",
+    flexShrink: 0,
   },
   filterRow: {
     display: "flex",
     gap: 8,
-    marginTop: 12,
     overflowX: "auto",
-    paddingBottom: 4,
+    paddingBottom: 16,
     scrollbarWidth: "none",
     msOverflowStyle: "none",
   },
   filterChip: (active) => ({
-    background: active ? WHITE : "rgba(255,255,255,0.12)",
-    color: active ? RED : WHITE,
-    border: active ? "none" : "1.5px solid rgba(255,255,255,0.3)",
+    background: active ? RED : WHITE,
+    color: active ? WHITE : MUTED,
+    border: active ? "none" : `1.5px solid ${BORDER}`,
     borderRadius: 24,
     padding: "7px 16px",
     fontSize: 13,
-    fontWeight: active ? 800 : 500,
+    fontWeight: active ? 800 : 600,
     cursor: "pointer",
     whiteSpace: "nowrap",
     flexShrink: 0,
-    boxShadow: active ? "0 2px 8px rgba(0,0,0,0.2)" : "none",
+    boxShadow: active ? `0 3px 12px rgba(183,28,28,0.35)` : "0 1px 3px rgba(0,0,0,0.06)",
     fontFamily: "inherit",
   }),
 
@@ -926,24 +939,6 @@ export default function CarFlixApp() {
   };
 
   const [savedIds, setSavedIds] = useState([]);
-  useEffect(() => {
-
-  const loadSavedCars = async () => {
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from("saved_cars")
-      .select("car_id")
-      .eq("user_id", user.id);
-
-    if (!error && data) {
-      setSavedIds(data.map(item => item.car_id));
-    }
-  };
-
-  loadSavedCars();
-
-}, [user]);
   const [search, setSearch] = useState("");
   const [brandFilter, setBrandFilter] = useState("All");
   const [filters, setFilters] = useState({ brand: "All", condition: "Any Condition", location: "", minPrice: "", maxPrice: "" });
@@ -995,44 +990,12 @@ export default function CarFlixApp() {
     setCars(data || []);
   };
 
-  const toggleSave = async (carId) => {
-  if (!user) {
-    alert("Please login first");
-    return;
-  }
-  console.log("USER:", user);
-  console.log("USER ID:", user?.id);
-  console.log("CAR ID:", carId);
-  const alreadySaved = savedIds.includes(carId);
-
-  if (alreadySaved) {
-
-    const { error } = await supabase
-      .from("saved_cars")
-      .delete()
-      .eq("user_id", user.id)
-      .eq("car_id", carId);
-
-    if (!error) {
-      setSavedIds(savedIds.filter(id => id !== carId));
-    }
-
-  } else {
-
-    const { error } = await supabase
-      .from("saved_cars")
-      .insert([
-        {
-          user_id: user.id,
-          car_id: carId
-        }
-      ]);
-
-    if (!error) {
-      setSavedIds([...savedIds, carId]);
-    }
-  }
-};
+  const toggleSave = (id) => {
+    if (!user) return setShowAuth(true);
+    const s = savedIds.includes(id) ? savedIds.filter(x => x !== id) : [...savedIds, id];
+    setSavedIds(s);
+    localStorage.setItem("saved_" + user.id, JSON.stringify(s));
+  };
 
   const login = async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -1186,9 +1149,6 @@ export default function CarFlixApp() {
                     </div>
                   </div>
                   <div style={S.headerIcons}>
-                    <button style={S.iconBtn} onClick={() => setShowFilter(true)}>
-                      <Icon name="filter" size={20} color={WHITE} />
-                    </button>
                     <button style={S.iconBtn} onClick={() => user ? logout() : setShowAuth(true)}>
                       <Icon name={user ? "logout" : "user"} size={20} color={WHITE} />
                     </button>
@@ -1198,29 +1158,41 @@ export default function CarFlixApp() {
                 {/* HOME TAB */}
                 {tab === "home" && (
                   <>
-                    {/* Search */}
-                    <div style={S.searchBar}>
-                      <div style={S.searchRow}>
-                        <div style={{ position: "relative", flex: 1 }}>
-                          <div style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", zIndex: 1 }}>
-                            <Icon name="search" size={18} color="#C4C4C4" />
-                          </div>
+                    {/* Search – modern floating card */}
+                    <div style={S.searchZone}>
+                      {/* Greeting row */}
+                      <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: 500, margin: "0 0 2px" }}>
+                        Find your next car 🚗
+                      </p>
+                      <p style={{ color: WHITE, fontSize: 19, fontWeight: 900, margin: "0 0 14px", letterSpacing: -0.3 }}>
+                        What are you looking for?
+                      </p>
+
+                      {/* White card that "waves" up from the red zone */}
+                      <div style={S.searchCard}>
+                        {/* Integrated search pill with filter button inside */}
+                        <div style={S.searchPill}>
+                          <Icon name="search" size={18} color={MUTED} />
                           <input
                             style={S.searchInput}
-                            placeholder="Search cars, brand or location…"
+                            placeholder="Car name, brand or location…"
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                           />
-                        </div>
-                        <button style={S.searchBtn} onClick={() => {}}>Search</button>
-                      </div>
-                      {/* Brand chips */}
-                      <div style={S.filterRow}>
-                        {BRANDS.map(b => (
-                          <button key={b} style={S.filterChip(brandFilter === b)} onClick={() => { setBrandFilter(b); setFilters(f => ({ ...f, brand: b })); }}>
-                            {b}
+                          <button style={S.searchFilterBtn} onClick={() => setShowFilter(true)}>
+                            <Icon name="filter" size={14} color={WHITE} />
+                            Filter
                           </button>
-                        ))}
+                        </div>
+
+                        {/* Brand chips — on the white card */}
+                        <div style={S.filterRow}>
+                          {BRANDS.map(b => (
+                            <button key={b} style={S.filterChip(brandFilter === b)} onClick={() => { setBrandFilter(b); setFilters(f => ({ ...f, brand: b })); }}>
+                              {b}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
