@@ -1000,7 +1000,9 @@ export default function CarFlixApp() {
     alert("Please login first");
     return;
   }
-
+  console.log("USER:", user);
+  console.log("USER ID:", user?.id);
+  console.log("CAR ID:", carId);
   const alreadySaved = savedIds.includes(carId);
 
   if (alreadySaved) {
