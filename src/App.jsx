@@ -1003,7 +1003,8 @@ useEffect(() => {
       .select("*");
 
     if (error) {
-      console.log(error);
+      console.log("INSERT ERROR", error);
+      alert(error.message);
       return;
     }
 
