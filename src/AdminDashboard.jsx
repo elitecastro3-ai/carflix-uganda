@@ -223,6 +223,7 @@ export default function AdminDashboard({ user, cars, setCars, deleteCar }) {
   const [filterStatus, setFilterStatus] = useState("all");   // all | pending | approved | rejected
   const [sortBy,       setSortBy]       = useState("newest");
   const [activityLog,  setActivityLog]  = useState(() => { try { return JSON.parse(localStorage.getItem("cf_activity") || "[]"); } catch(_) { return []; } });
+  const [inquiries, setInquiries] = useState([]);
 
   // ── ORIGINAL FETCH ────────────────────────────────────────────────────────
   useEffect(() => { fetchUsers(); }, []);
