@@ -271,13 +271,38 @@ export default function AdminDashboard({ user, cars, setCars, deleteCar }) {
     setActivityLog(p => logAction(p, `${updatedFeatured ? "Featured" : "Unfeatured"} ${car.carName}`));
   };
 
-  const updateStatus = (id, status) => {
-    const car = cars.find(c => c.id === id);
-    const updated = cars.map((c) => c.id === id ? { ...c, status } : c);
-    setCars(updated);
-    localStorage.setItem("cf_cars", JSON.stringify(updated));
-    setActivityLog(p => logAction(p, `${status.charAt(0).toUpperCase() + status.slice(1)} ${car?.carName || "car"}`));
-  };
+const updateStatus = async (id, status) => {
+  const car = cars.find(c => c.id === id);
+
+  // 1. Update database
+  const { error } = await supabase
+    .from("cars")
+    .update({ status })
+    .eq("id", id);
+
+  if (error) {
+    console.log(error);
+    alert("Failed to update status");
+    return;
+  }
+
+  // 2. Update frontend state
+  const updated = cars.map((c) =>
+    c.id === id ? { ...c, status } : c
+  );
+
+  setCars(updated);
+
+  // 3. Activity log
+  setActivityLog((p) =>
+    logAction(
+      p,
+      `${status.charAt(0).toUpperCase() + status.slice(1)} ${
+        car?.carName || "car"
+      }`
+    )
+  );
+};
 
   // ── NEW FUNCTIONS ─────────────────────────────────────────────────────────
   const handleEditSave = (updatedCar) => {
