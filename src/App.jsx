@@ -996,6 +996,61 @@ export default function CarFlixApp() {
 };
 
 }, []);
+useEffect(() => {
+  const fetchInquiries = async () => {
+    const { data, error } = await supabase
+      .from("inquiries")
+      .select("*");
+
+    if (error) {
+      console.log(error);
+      return;
+    }
+
+    console.log("ALL INQUIRIES:", data);
+  };
+
+  fetchInquiries();
+}, []);
+const handleWhatsAppInquiry = async (car) => {
+  try {
+
+    // get logged in buyer
+    const { data: authData } = await supabase.auth.getUser();
+
+    const buyerId = authData?.user?.id || null;
+
+    // save inquiry
+    const { error } = await supabase
+      .from("inquiries")
+      .insert([
+        {
+          car_id: car.id,
+          buyer_id: buyerId,
+          seller_id: car.owner_id,
+          name: authData?.user?.user_metadata?.username || "Guest",
+          phone: authData?.user?.phone || "",
+          messages: `Interested in ${car.carName}`,
+        }
+      ]);
+
+    if (error) {
+      console.log("Inquiry insert error:", error);
+    }
+
+    // open whatsapp
+    const whatsappMessage =
+      `Hello, I'm interested in your ${car.carName}`;
+
+    const whatsappUrl =
+      `https://wa.me/${car.phone}?text=${encodeURIComponent(whatsappMessage)}`;
+
+    window.open(whatsappUrl, "_blank");
+
+  } catch (err) {
+    console.log(err);
+  }
+};
 
 
   useEffect(() => {
@@ -1178,45 +1233,7 @@ export default function CarFlixApp() {
     </div>
   );
 
-  const handleWhatsAppInquiry = async (car) => {
-  try {
-
-    // get logged in buyer
-    const { data: authData } = await supabase.auth.getUser();
-
-    const buyerId = authData?.user?.id || null;
-
-    // save inquiry
-    const { error } = await supabase
-      .from("inquiries")
-      .insert([
-        {
-          car_id: car.id,
-          buyer_id: buyerId,
-          seller_id: car.owner_id,
-          name: authData?.user?.user_metadata?.username || "Guest",
-          phone: authData?.user?.phone || "",
-          messages: `Interested in ${car.carName}`,
-        }
-      ]);
-
-    if (error) {
-      console.log("Inquiry insert error:", error);
-    }
-
-    // open whatsapp
-    const whatsappMessage =
-      `Hello, I'm interested in your ${car.carName}`;
-
-    const whatsappUrl =
-      `https://wa.me/${car.phone}?text=${encodeURIComponent(whatsappMessage)}`;
-
-    window.open(whatsappUrl, "_blank");
-
-  } catch (err) {
-    console.log(err);
-  }
-};
+  
 
   
   return (
