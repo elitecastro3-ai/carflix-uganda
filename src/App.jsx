@@ -980,7 +980,21 @@ export default function CarFlixApp() {
   }, []);
 
   useEffect(() => {
-    fetchUsers();
+    const fetchUsers = async () => {
+  const { data, error } = await supabase
+    .from("users")
+    .select("*");
+
+  if (error) {
+    console.log(error);
+    return;
+  }
+
+  console.log("ALL USERS:", data);
+
+  setUsers(data || []);
+};
+
 }, []);
 
 
@@ -1164,21 +1178,7 @@ export default function CarFlixApp() {
     </div>
   );
 
-  const fetchUsers = async () => {
-  const { data, error } = await supabase
-    .from("users")
-    .select("*");
-
-  if (error) {
-    console.log(error);
-    return;
-  }
-
-  console.log("ALL USERS:", data);
-
-  setUsers(data || []);
-};
-
+  
   return (
     <BrowserRouter>
       <Routes>
