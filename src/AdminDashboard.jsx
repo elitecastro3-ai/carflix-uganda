@@ -164,7 +164,7 @@ const EditCarModal = ({ car, onSave, onClose }) => {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 800, display: "flex", alignItems: "flex-end", fontFamily: FONT }}>
-      <div style={{ background: WHITE, borderRadius: "22px 22px 0 0", width: "100%", maxWidth: 480, margin: "0 auto", padding: "8px 20px 32px", maxHeight: "92vh", overflowY: "auto" }}>
+      <div style={{ background: WHITE, borderRadius: "22px 22px 0 0", width: "100%", maxWidth: "100%", margin: "0 auto", padding: "8px 20px 32px", maxHeight: "92vh", overflowX: "hidden" }}>
         <div style={{ width: 40, height: 4, background: BORDER, borderRadius: 2, margin: "10px auto 18px" }} />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <p style={{ fontWeight: 900, fontSize: 18, color: TEXT, margin: 0 }}>Edit Listing</p>
