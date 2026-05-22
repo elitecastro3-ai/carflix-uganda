@@ -1019,7 +1019,11 @@ const handleWhatsAppInquiry = async (car) => {
     // get logged in buyer
     const { data: authData } = await supabase.auth.getUser();
 
-    const buyerId = authData?.user?.id || null;
+    const buyerId = authData?.user?.id || null;console.log("AUTH DATA:", authData);
+    console.log("BUYER ID:", buyerId);
+    console.log("CAR:", car);
+
+
 
     // save inquiry
     const { error } = await supabase
