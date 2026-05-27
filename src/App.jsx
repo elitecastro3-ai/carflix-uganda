@@ -15,7 +15,7 @@ const MOCK_CARS = [
   { id: "8", carName: "GLC 300 2020", brand: "Mercedes-Benz", price: 210000000, location: "Kampala", condition: "Foreign Used", description: "Mercedes GLC 300 2020 AMG line, warranty available.", images: ["https://images.unsplash.com/photo-1617788138017-80ad40651399?w=400&q=80"], ownerId: "u2", badge: null, featured: false },
 ];
 
-const BRANDS = ["All", "Toyota", "Mercedes-Benz", "BMW", "Nissan", "Honda", "Subaru"];
+const BRANDS = ["All", "Toyota", "Mercedes-Benz", "BMW", "Nissan", "Honda", "Subaru", "Ford", "Mazda", "Land Rover", "Volkswagen", "Suzuki", "Mitsubishi", "Volvo", "Jeep", "Other"];
 const CONDITIONS = ["Any Condition", "New", "Used", "Foreign Used", "Local Used"];
 const WA_NUMBERS = [
   { label: "CAR-FLIX Line 1", number: "256708866140", display: "0708 866 140" },
@@ -145,14 +145,18 @@ const S = {
     minWidth: 0,
   },
   searchFilterBtn: {
-    background: "none",
+    background: RED,
     border: "none",
-    padding: "6px 4px",
+    borderRadius: 22,
+    padding: "8px 14px",
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
-    color: MUTED,
+    gap: 5,
+    color: WHITE,
     flexShrink: 0,
+    boxShadow: "0 2px 8px rgba(183,28,28,0.4)",
+    fontFamily: "inherit",
   },
   filterRow: {
     display: "flex",
@@ -1297,7 +1301,8 @@ const handleWhatsAppInquiry = async (car) => {
                           </button>
                         )}
                         <button style={S.searchFilterBtn} onClick={() => setShowFilter(true)}>
-                          <Icon name="filter" size={17} color="#8696A0" />
+                          <Icon name="filter" size={14} color={WHITE} />
+                          <span style={{ fontSize: 12, fontWeight: 800, fontFamily: "inherit" }}>Filter</span>
                         </button>
                       </div>
 
