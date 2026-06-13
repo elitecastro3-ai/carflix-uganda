@@ -46,7 +46,7 @@ const Icon = ({ name, size = 20, color = "currentColor" }) => {
     photo: "M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z",
     check: "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z",
     filter: "M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z",
-    car: "M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-5h14v5z",
+    car: "M20.77 10.34C20.44 9.53 19.65 9 18.78 9h-1.81L14.94 5.57C14.56 5.21 14.05 5 13.52 5H7.5C6.23 5 5.09 5.72 4.56 6.84L3.1 9.82C2.43 10.17 2 10.88 2 11.67V15c0 .55.45 1 1 1h1.05c.26 1.16 1.29 2 2.45 2 1.16 0 2.19-.84 2.45-2h5.1c.26 1.16 1.29 2 2.45 2 1.16 0 2.19-.84 2.45-2H21c.55 0 1-.45 1-1v-2.22c0-.53-.14-1.05-.4-1.5l-.83-1.44zM6.5 17c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm11 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zM5.5 10l1.25-2.5C7.06 7.2 7.26 7 7.5 7h6.02l1.96 3H5.5z",
     logout: "M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z",
     user: "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z",
     image: "M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z",
@@ -432,22 +432,19 @@ const S = {
   postFab: {
     position: "fixed",
     bottom: 92,
-    right: 16,
-    background: RED,
+    right: 18,
+    background: `linear-gradient(135deg, ${RED_DARK} 0%, ${RED} 100%)`,
     color: WHITE,
     border: "none",
-    borderRadius: 32,
-    height: 52,
-    padding: "0 22px",
+    borderRadius: "50%",
+    width: 62,
+    height: 62,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
     cursor: "pointer",
-    boxShadow: "0 6px 24px rgba(183,28,28,0.45)",
+    boxShadow: "0 6px 24px rgba(183,28,28,0.5), inset 0 1px 0 rgba(255,255,255,0.15)",
     zIndex: 300,
-    fontFamily: "inherit",
-    whiteSpace: "nowrap",
   },
 };
 
@@ -1394,8 +1391,7 @@ const handleWhatsAppInquiry = async (car) => {
                         onClick={() => setShowPost(true)}
                         title="Post a car"
                       >
-                        <Icon name="car" size={20} color={WHITE} />
-                        <span style={{ fontSize: 14, fontWeight: 800, color: WHITE, letterSpacing: 0.2 }}>Sell Your Car</span>
+                        <Icon name="car" size={26} color={WHITE} />
                       </button>
                     ) : (
                       <button
@@ -1403,8 +1399,7 @@ const handleWhatsAppInquiry = async (car) => {
                         onClick={() => setShowAuth(true)}
                         title="Sign in to post"
                       >
-                        <Icon name="car" size={20} color={WHITE} />
-                        <span style={{ fontSize: 14, fontWeight: 800, color: WHITE, letterSpacing: 0.2 }}>Sell Your Car</span>
+                        <Icon name="car" size={26} color={WHITE} />
                       </button>
                     )}
                   </>
