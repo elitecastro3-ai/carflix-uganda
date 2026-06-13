@@ -46,6 +46,7 @@ const Icon = ({ name, size = 20, color = "currentColor" }) => {
     photo: "M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z",
     check: "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z",
     filter: "M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z",
+    car: "M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-5h14v5z",
     logout: "M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z",
     user: "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z",
     image: "M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z",
@@ -431,19 +432,22 @@ const S = {
   postFab: {
     position: "fixed",
     bottom: 92,
-    right: 18,
+    right: 16,
     background: RED,
     color: WHITE,
     border: "none",
-    borderRadius: 50,
-    width: 56,
-    height: 56,
+    borderRadius: 32,
+    height: 52,
+    padding: "0 22px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
     cursor: "pointer",
-    boxShadow: "0 6px 24px rgba(183,28,28,0.5)",
+    boxShadow: "0 6px 24px rgba(183,28,28,0.45)",
     zIndex: 300,
+    fontFamily: "inherit",
+    whiteSpace: "nowrap",
   },
 };
 
@@ -1371,14 +1375,36 @@ const handleWhatsAppInquiry = async (car) => {
                       )}
                     </div>
 
-                    {/* FAB */}
+                    {/* FAB — car icon + pill + pulse */}
+                    <style>{`
+                      @keyframes cfPulse {
+                        0%   { box-shadow: 0 0 0 0 rgba(183,28,28,0.55), 0 6px 24px rgba(183,28,28,0.4); }
+                        60%  { box-shadow: 0 0 0 14px rgba(183,28,28,0),  0 6px 24px rgba(183,28,28,0.4); }
+                        100% { box-shadow: 0 0 0 0 rgba(183,28,28,0),     0 6px 24px rgba(183,28,28,0.4); }
+                      }
+                      @keyframes cfPulseGrey {
+                        0%   { box-shadow: 0 0 0 0 rgba(156,163,175,0.5), 0 4px 16px rgba(0,0,0,0.15); }
+                        60%  { box-shadow: 0 0 0 12px rgba(156,163,175,0), 0 4px 16px rgba(0,0,0,0.15); }
+                        100% { box-shadow: 0 0 0 0 rgba(156,163,175,0),   0 4px 16px rgba(0,0,0,0.15); }
+                      }
+                    `}</style>
                     {user ? (
-                      <button style={S.postFab} onClick={() => setShowPost(true)} title="Post a car">
-                        <Icon name="plus" size={26} color={WHITE} />
+                      <button
+                        style={{ ...S.postFab, animation: "cfPulse 2.2s ease-out infinite" }}
+                        onClick={() => setShowPost(true)}
+                        title="Post a car"
+                      >
+                        <Icon name="car" size={20} color={WHITE} />
+                        <span style={{ fontSize: 14, fontWeight: 800, color: WHITE, letterSpacing: 0.2 }}>Sell Your Car</span>
                       </button>
                     ) : (
-                      <button style={{ ...S.postFab, background: "#9CA3AF" }} onClick={() => setShowAuth(true)} title="Sign in to post">
-                        <Icon name="plus" size={26} color={WHITE} />
+                      <button
+                        style={{ ...S.postFab, background: "#9CA3AF", animation: "cfPulseGrey 2.2s ease-out infinite" }}
+                        onClick={() => setShowAuth(true)}
+                        title="Sign in to post"
+                      >
+                        <Icon name="car" size={20} color={WHITE} />
+                        <span style={{ fontSize: 14, fontWeight: 800, color: WHITE, letterSpacing: 0.2 }}>Sell Your Car</span>
                       </button>
                     )}
                   </>
