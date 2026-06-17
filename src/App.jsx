@@ -57,6 +57,7 @@ const Icon = ({ name, size = 20, color = "currentColor" }) => {
     check: "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z",
     filter: "M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z",
     car: "M20.77 10.34C20.44 9.53 19.65 9 18.78 9h-1.81L14.94 5.57C14.56 5.21 14.05 5 13.52 5H7.5C6.23 5 5.09 5.72 4.56 6.84L3.1 9.82C2.43 10.17 2 10.88 2 11.67V15c0 .55.45 1 1 1h1.05c.26 1.16 1.29 2 2.45 2 1.16 0 2.19-.84 2.45-2h5.1c.26 1.16 1.29 2 2.45 2 1.16 0 2.19-.84 2.45-2H21c.55 0 1-.45 1-1v-2.22c0-.53-.14-1.05-.4-1.5l-.83-1.44zM6.5 17c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm11 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zM5.5 10l1.25-2.5C7.06 7.2 7.26 7 7.5 7h6.02l1.96 3H5.5z",
+    shipping: "M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM17 6.5l2.25 3H17V6.5zM18 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z",
     logout: "M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z",
     user: "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z",
     image: "M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z",
@@ -455,6 +456,49 @@ const S = {
     cursor: "pointer",
     boxShadow: "0 6px 24px rgba(183,28,28,0.5), inset 0 1px 0 rgba(255,255,255,0.15)",
     zIndex: 300,
+  },
+
+  // ── FAB flyout (choose: post a car in Uganda vs. post an import)
+  fabMenuBackdrop: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 295,
+    background: "transparent",
+  },
+  fabMenu: {
+    position: "fixed",
+    bottom: 162,
+    right: 18,
+    zIndex: 301,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-end",
+    gap: 10,
+  },
+  fabMenuItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    background: CARD,
+    border: `1px solid ${BORDER}`,
+    borderRadius: 30,
+    padding: "8px 16px 8px 8px",
+    boxShadow: "0 4px 18px rgba(0,0,0,0.18)",
+    cursor: "pointer",
+    fontFamily: "inherit",
+    fontWeight: 700,
+    fontSize: 13,
+    color: TEXT,
+    whiteSpace: "nowrap",
+  },
+  fabMenuIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
   },
 
   // ── Imports tab
@@ -942,6 +986,136 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
   );
 };
 
+// ── POST IMPORT MODAL ───────────────────────────────────────────────────────────
+// Mirrors PostCarModal's shell/fields, but for cars still en route (not in Uganda yet).
+// TODO(backend): once a real `imports` table exists, swap `onSave(newImport)` below
+// for `await supabase.from("imports").insert([...]).select()`, the same way
+// PostCarModal writes to `cars`. For now this only updates local `imports` state
+// (passed in as `onSave`), so submissions don't persist across a page refresh.
+const PostImportModal = ({ onClose, onSave }) => {
+  const [form, setForm] = useState({ carName: "", brand: "Toyota", price: "", originCountry: "", expectedArrival: "", condition: "Foreign Used", description: "", images: [] });
+  const [err, setErr] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (form.images.length + files.length > 7) return setErr("Maximum 7 images allowed");
+    setUploading(true);
+    let uploadedUrls = [];
+    for (let file of files) {
+      const fileName = `${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage.from("cars").upload(fileName, file);
+      if (error) { setUploading(false); return setErr("Upload failed"); }
+      const { data } = supabase.storage.from("cars").getPublicUrl(fileName);
+      uploadedUrls.push(data.publicUrl);
+    }
+    setForm((prev) => ({ ...prev, images: [...prev.images, ...uploadedUrls] }));
+    e.target.value = "";
+    setUploading(false);
+  };
+
+  const removeImg = (i) => setForm((f) => ({ ...f, images: f.images.filter((_, idx) => idx !== i) }));
+
+  const save = () => {
+    setErr("");
+    if (!form.carName || !form.price || !form.originCountry || !form.expectedArrival || !form.description) {
+      return setErr("Please fill all required fields.");
+    }
+    const newImport = {
+      id: `imp_${Date.now()}`,
+      carName: form.carName,
+      brand: form.brand,
+      price: Number(form.price),
+      location: "In transit", // keeps existing WaPickerModal message template working unchanged
+      originCountry: form.originCountry,
+      expectedArrival: form.expectedArrival,
+      condition: form.condition,
+      description: form.description,
+      images: form.images,
+    };
+    onSave(newImport);
+    onClose();
+  };
+
+  return (
+    <div style={S.modalOverlay}>
+      <div style={{ ...S.modal, maxHeight: "92vh" }}>
+        <div style={S.modalHandle} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+          <h2 style={{ ...S.modalTitle, margin: 0 }}>Post an Import</h2>
+          <button onClick={onClose} style={{ background: "#F3F4F6", border: "none", borderRadius: 10, padding: 8, cursor: "pointer", display: "flex" }}>
+            <Icon name="close" size={20} color={MUTED} />
+          </button>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 6, background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 10, padding: "8px 10px", marginBottom: 16, fontSize: 12, color: "#1D4ED8", fontWeight: 600 }}>
+          <Icon name="shipping" size={14} color="#1D4ED8" /> This lists under the "Imports" tab, not the main listings.
+        </div>
+
+        <label style={S.label}>Car Name *</label>
+        <input style={S.input} placeholder="e.g. Toyota Alphard 2022" value={form.carName} onChange={set("carName")} />
+
+        <label style={S.label}>Brand *</label>
+        <select style={S.select} value={form.brand} onChange={set("brand")}>
+          {BRANDS.filter(b => b !== "All").map(b => <option key={b}>{b}</option>)}
+        </select>
+
+        <label style={S.label}>Price (UGX) *</label>
+        <input style={S.input} type="number" placeholder="e.g. 145000000" value={form.price} onChange={set("price")} />
+
+        <label style={S.label}>Importing From *</label>
+        <input style={S.input} placeholder="e.g. Japan, UAE, UK" value={form.originCountry} onChange={set("originCountry")} />
+
+        <label style={S.label}>Expected Arrival *</label>
+        <input style={S.input} placeholder="e.g. Aug 2026" value={form.expectedArrival} onChange={set("expectedArrival")} />
+
+        <label style={S.label}>Condition</label>
+        <select style={S.select} value={form.condition} onChange={set("condition")}>
+          {["New", "Foreign Used", "Local Used"].map(c => <option key={c}>{c}</option>)}
+        </select>
+
+        <label style={S.label}>Description *</label>
+        <textarea style={S.textarea} placeholder="Describe the car…" value={form.description} onChange={set("description")} />
+
+        <label style={S.label}>Photos (max 7, optional)</label>
+        <label style={{ display: "block", background: "#F9FAFB", border: `2px dashed ${BORDER}`, borderRadius: 12, padding: "16px", textAlign: "center", cursor: "pointer", marginBottom: 12 }}>
+          <input type="file" accept="image/*" multiple onChange={handleImageUpload} style={{ display: "none" }} />
+          <Icon name="photo" size={24} color={MUTED} />
+          <p style={{ margin: "6px 0 0", fontSize: 13, color: MUTED, fontWeight: 600 }}>
+            {uploading ? "Uploading…" : "Tap to upload images"}
+          </p>
+          <p style={{ margin: "2px 0 0", fontSize: 11, color: "#C4C4C4" }}>{form.images.length}/7 photos added</p>
+        </label>
+
+        {form.images.length > 0 && (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+            {form.images.map((img, i) => (
+              <div key={i} style={{ position: "relative" }}>
+                <img src={img} alt="" style={{ width: 70, height: 56, objectFit: "cover", borderRadius: 10, border: `2px solid ${BORDER}` }} />
+                <button onClick={() => removeImg(i)} style={{ position: "absolute", top: -5, right: -5, background: RED, border: "none", borderRadius: 10, width: 18, height: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon name="close" size={10} color={WHITE} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {err && (
+          <div style={{ background: "#FFF0F0", borderRadius: 10, padding: "10px 12px", marginBottom: 12 }}>
+            <p style={{ ...S.errorTxt, margin: 0 }}>{err}</p>
+          </div>
+        )}
+
+        <button style={{ ...S.primaryBtn, opacity: uploading ? 0.7 : 1 }} onClick={save} disabled={uploading}>
+          {uploading ? "Uploading images…" : "Post Import"}
+        </button>
+        <button style={S.ghostBtn} onClick={onClose}>Cancel</button>
+      </div>
+    </div>
+  );
+};
+
 // ── FILTER PANEL ───────────────────────────────────────────────────────────────
 const FilterPanel = ({ filters, onChange, onClose }) => {
   const [f, setF] = useState(filters);
@@ -1020,6 +1194,9 @@ export default function CarFlixApp() {
   const [filters, setFilters] = useState({ brand: "All", condition: "Any Condition", location: "", minPrice: "", maxPrice: "" });
   const [showFilter, setShowFilter] = useState(false);
   const [showPost, setShowPost] = useState(false);
+  const [showPostImport, setShowPostImport] = useState(false); // new: "Post an import" modal
+  const [showFabMenu, setShowFabMenu] = useState(false); // new: FAB flyout (choose Uganda car vs import)
+  const [imports, setImports] = useState(MOCK_IMPORTS); // mock-only for now — see TODO near MOCK_IMPORTS
   const [selectedCar, setSelectedCar] = useState(null);
   const [editCar, setEditCar] = useState(null);
   const [showAdmin, setShowAdmin] = useState(false);
@@ -1352,6 +1529,7 @@ const handleWhatsAppInquiry = async (car) => {
                 {showTerms && <TermsModal onAccept={acceptTerms} onDecline={() => setShowTerms(false)} />}
                 {showFilter && <FilterPanel filters={filters} onChange={f => { setFilters(f); if (f.brand !== "All") setBrandFilter(f.brand); }} onClose={() => setShowFilter(false)} />}
                 {(showPost || editCar) && user && <PostCarModal user={user} carToEdit={editCar} onClose={() => { setShowPost(false); setEditCar(null); }} onSave={async () => { await refresh(); setShowPost(false); setEditCar(null); }} />}
+                {showPostImport && user && <PostImportModal onClose={() => setShowPostImport(false)} onSave={(newImport) => setImports((prev) => [newImport, ...prev])} />}
                 {showWaPicker && <WaPickerModal car={waCarContext} onClose={() => setShowWaPicker(false)} />}
 
                 {/* HEADER */}
@@ -1475,15 +1653,46 @@ const handleWhatsAppInquiry = async (car) => {
                         60%  { box-shadow: 0 0 0 12px rgba(156,163,175,0), 0 4px 16px rgba(0,0,0,0.15); }
                         100% { box-shadow: 0 0 0 0 rgba(156,163,175,0),   0 4px 16px rgba(0,0,0,0.15); }
                       }
+                      @keyframes cfFlyIn {
+                        0%   { opacity: 0; transform: translateY(8px) scale(0.9); }
+                        100% { opacity: 1; transform: translateY(0) scale(1); }
+                      }
                     `}</style>
                     {user ? (
-                      <button
-                        style={{ ...S.postFab, animation: "cfPulse 2.2s ease-out infinite" }}
-                        onClick={() => setShowPost(true)}
-                        title="Post a car"
-                      >
-                        <Icon name="car" size={26} color={WHITE} />
-                      </button>
+                      <>
+                        {showFabMenu && (
+                          <div style={S.fabMenuBackdrop} onClick={() => setShowFabMenu(false)} />
+                        )}
+                        {showFabMenu && (
+                          <div style={S.fabMenu}>
+                            <button
+                              style={{ ...S.fabMenuItem, animation: "cfFlyIn 0.16s ease-out 0.03s both" }}
+                              onClick={() => { setShowFabMenu(false); setShowPost(true); }}
+                            >
+                              <span style={{ ...S.fabMenuIcon, background: RED }}>
+                                <Icon name="car" size={18} color={WHITE} />
+                              </span>
+                              In Uganda
+                            </button>
+                            <button
+                              style={{ ...S.fabMenuItem, animation: "cfFlyIn 0.16s ease-out both" }}
+                              onClick={() => { setShowFabMenu(false); setShowPostImport(true); }}
+                            >
+                              <span style={{ ...S.fabMenuIcon, background: "#1D4ED8" }}>
+                                <Icon name="shipping" size={18} color={WHITE} />
+                              </span>
+                              Importing
+                            </button>
+                          </div>
+                        )}
+                        <button
+                          style={{ ...S.postFab, animation: showFabMenu ? "none" : "cfPulse 2.2s ease-out infinite" }}
+                          onClick={() => setShowFabMenu((v) => !v)}
+                          title="Post a car"
+                        >
+                          <Icon name={showFabMenu ? "close" : "car"} size={26} color={WHITE} />
+                        </button>
+                      </>
                     ) : (
                       <button
                         style={{ ...S.postFab, background: "#9CA3AF", animation: "cfPulseGrey 2.2s ease-out infinite" }}
@@ -1644,7 +1853,7 @@ const handleWhatsAppInquiry = async (car) => {
                   <div style={S.section}>
                     <div style={S.sectionRow}>
                       <span style={S.sectionTitle}>
-                        {MOCK_IMPORTS.length} Car{MOCK_IMPORTS.length !== 1 ? "s" : ""} Incoming
+                        {imports.length} Car{imports.length !== 1 ? "s" : ""} Incoming
                       </span>
                       <span style={{ fontSize: 11, color: "#1D4ED8", fontWeight: 800, background: "#EFF6FF", border: "1px solid #BFDBFE", padding: "3px 10px", borderRadius: 20 }}>
                         ✈️ ON THE WAY
@@ -1653,15 +1862,15 @@ const handleWhatsAppInquiry = async (car) => {
                     <p style={{ color: MUTED, fontSize: 13, lineHeight: 1.6, marginBottom: 18, marginTop: -4 }}>
                       These cars are currently being imported and aren't in Uganda yet. Tap "Notify Me" to get a WhatsApp update when one lands.
                     </p>
-                    {MOCK_IMPORTS.length === 0 ? (
+                    {imports.length === 0 ? (
                       <div style={{ textAlign: "center", padding: "48px 0 32px", color: MUTED }}>
-                        <Icon name="car" size={44} color="#E5E7EB" />
+                        <Icon name="shipping" size={44} color="#E5E7EB" />
                         <p style={{ marginTop: 14, fontWeight: 600, fontSize: 15, color: "#9CA3AF" }}>No imports right now</p>
                         <p style={{ margin: "4px 0 0", fontSize: 13, color: "#C4C4C4" }}>Check back soon for new arrivals</p>
                       </div>
                     ) : (
                       <>
-                        {MOCK_IMPORTS.map(car => <ImportCard key={car.id} car={car} />)}
+                        {imports.map(car => <ImportCard key={car.id} car={car} />)}
                       </>
                     )}
                   </div>
@@ -1673,7 +1882,7 @@ const handleWhatsAppInquiry = async (car) => {
                     { id: "home", icon: "home", label: "Home" },
                     { id: "saved", icon: "heart", label: "Saved" },
                     { id: "admin", icon: "lock", label: "My Cars" },
-                    { id: "imports", icon: "car", label: "Imports" },
+                    { id: "imports", icon: "shipping", label: "Imports" },
                     { id: "about", icon: "info", label: "About" },
                   ].map(n => {
                     const active = tab === n.id;
