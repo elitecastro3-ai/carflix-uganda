@@ -15,6 +15,16 @@ const MOCK_CARS = [
   { id: "8", carName: "GLC 300 2020", brand: "Mercedes-Benz", price: 210000000, location: "Kampala", condition: "Foreign Used", description: "Mercedes GLC 300 2020 AMG line, warranty available.", images: ["https://images.unsplash.com/photo-1617788138017-80ad40651399?w=400&q=80"], ownerId: "u2", badge: null, featured: false },
 ];
 
+// Mock data for the "Imports" tab — cars en route, not yet in-country.
+// TODO(backend): swap this for `await supabase.from("imports").select("*")`
+// once an `imports` table exists, the same way MOCK_CARS was swapped for `cars`.
+const MOCK_IMPORTS = [
+  { id: "imp1", carName: "Alphard 2022", brand: "Toyota", price: 145000000, location: "In transit", originCountry: "Japan", expectedArrival: "Aug 2026", condition: "Foreign Used", description: "Toyota Alphard 2022, twin power doors, full leather. Currently on shipment from Japan.", images: ["https://images.unsplash.com/photo-1617469767053-d3b523a0b982?w=400&q=80"] },
+  { id: "imp2", carName: "RX 350 2021", brand: "Lexus", price: 165000000, location: "In transit", originCountry: "UAE", expectedArrival: "Jul 2026", condition: "Foreign Used", description: "Lexus RX 350 F-Sport 2021, low mileage, full options. Awaiting customs clearance.", images: [] },
+  { id: "imp3", carName: "CX-5 2022", brand: "Mazda", price: 98000000, location: "In transit", originCountry: "Japan", expectedArrival: "Sep 2026", condition: "Foreign Used", description: "Mazda CX-5 2022, AWD, sunroof. Booked on next vessel from Japan.", images: ["https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=400&q=80"] },
+  { id: "imp4", carName: "Outback 2020", brand: "Subaru", price: 88000000, location: "In transit", originCountry: "USA", expectedArrival: "Aug 2026", condition: "Foreign Used", description: "Subaru Outback 2020, AWD, towbar fitted. In transit, dock ETA confirmed.", images: [] },
+];
+
 const BRANDS = ["All", "Toyota", "Mercedes-Benz", "BMW", "Nissan", "Honda", "Subaru", "Ford", "Mazda", "Land Rover", "Volkswagen", "Suzuki", "Mitsubishi", "Volvo", "Jeep", "Other"];
 const CONDITIONS = ["Any Condition", "New", "Used", "Foreign Used", "Local Used"];
 const WA_NUMBERS = [
@@ -445,6 +455,59 @@ const S = {
     cursor: "pointer",
     boxShadow: "0 6px 24px rgba(183,28,28,0.5), inset 0 1px 0 rgba(255,255,255,0.15)",
     zIndex: 300,
+  },
+
+  // ── Imports tab
+  importCard: {
+    background: CARD,
+    borderRadius: 18,
+    overflow: "hidden",
+    boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+    border: `1px solid ${BORDER}`,
+    marginBottom: 14,
+  },
+  importBadge: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    background: "#1D4ED8",
+    color: WHITE,
+    fontSize: 9,
+    fontWeight: 800,
+    borderRadius: 6,
+    padding: "3px 8px",
+    letterSpacing: 0.5,
+    zIndex: 2,
+    textTransform: "uppercase",
+  },
+  importEtaRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    background: "#FFFBEB",
+    border: "1px solid #FDE68A",
+    borderRadius: 10,
+    padding: "6px 10px",
+    fontSize: 12,
+    fontWeight: 700,
+    color: "#92400E",
+    marginBottom: 10,
+  },
+  notifyBtn: {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    background: RED,
+    border: "none",
+    borderRadius: 12,
+    padding: "11px 0",
+    color: WHITE,
+    fontSize: 13,
+    fontWeight: 800,
+    cursor: "pointer",
+    fontFamily: "inherit",
   },
 };
 
@@ -1243,6 +1306,34 @@ const handleWhatsAppInquiry = async (car) => {
     </div>
   );
 
+  // ── Import card (Imports tab — incoming cars, no "View" since there's nothing in-country yet)
+  const ImportCard = ({ car }) => (
+    <div style={S.importCard}>
+      <div style={{ position: "relative" }}>
+        {Array.isArray(car.images) && car.images.length > 0 ? (
+          <img src={car.images[0]} alt={car.carName} style={S.cardImg} />
+        ) : (
+          <div style={S.noPhoto}>
+            <Icon name="photo" size={28} color="#D1D5DB" />
+            <span>No photo yet</span>
+          </div>
+        )}
+        <span style={S.importBadge}>✈️ Importing</span>
+      </div>
+      <div style={{ padding: "12px 14px 14px" }}>
+        <p style={{ fontWeight: 700, fontSize: 14, color: TEXT, margin: "0 0 3px" }}>{car.carName}</p>
+        <p style={{ color: RED, fontWeight: 800, fontSize: 15, margin: "0 0 8px" }}>{formatPrice(car.price)}</p>
+        <div style={S.importEtaRow}>
+          <Icon name="info" size={13} color="#92400E" />
+          ETA {car.expectedArrival} · from {car.originCountry}
+        </div>
+        <button style={S.notifyBtn} onClick={() => openWa(car)}>
+          <Icon name="whatsapp" size={15} color={WHITE} /> Notify Me
+        </button>
+      </div>
+    </div>
+  );
+
   
 
   
@@ -1548,12 +1639,41 @@ const handleWhatsAppInquiry = async (car) => {
                   </div>
                 )}
 
+                {/* IMPORTS TAB */}
+                {tab === "imports" && (
+                  <div style={S.section}>
+                    <div style={S.sectionRow}>
+                      <span style={S.sectionTitle}>
+                        {MOCK_IMPORTS.length} Car{MOCK_IMPORTS.length !== 1 ? "s" : ""} Incoming
+                      </span>
+                      <span style={{ fontSize: 11, color: "#1D4ED8", fontWeight: 800, background: "#EFF6FF", border: "1px solid #BFDBFE", padding: "3px 10px", borderRadius: 20 }}>
+                        ✈️ ON THE WAY
+                      </span>
+                    </div>
+                    <p style={{ color: MUTED, fontSize: 13, lineHeight: 1.6, marginBottom: 18, marginTop: -4 }}>
+                      These cars are currently being imported and aren't in Uganda yet. Tap "Notify Me" to get a WhatsApp update when one lands.
+                    </p>
+                    {MOCK_IMPORTS.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "48px 0 32px", color: MUTED }}>
+                        <Icon name="car" size={44} color="#E5E7EB" />
+                        <p style={{ marginTop: 14, fontWeight: 600, fontSize: 15, color: "#9CA3AF" }}>No imports right now</p>
+                        <p style={{ margin: "4px 0 0", fontSize: 13, color: "#C4C4C4" }}>Check back soon for new arrivals</p>
+                      </div>
+                    ) : (
+                      <>
+                        {MOCK_IMPORTS.map(car => <ImportCard key={car.id} car={car} />)}
+                      </>
+                    )}
+                  </div>
+                )}
+
                 {/* BOTTOM NAV */}
                 <div style={S.bottomNav}>
                   {[
                     { id: "home", icon: "home", label: "Home" },
                     { id: "saved", icon: "heart", label: "Saved" },
                     { id: "admin", icon: "lock", label: "My Cars" },
+                    { id: "imports", icon: "car", label: "Imports" },
                     { id: "about", icon: "info", label: "About" },
                   ].map(n => {
                     const active = tab === n.id;
