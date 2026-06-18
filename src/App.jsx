@@ -1252,7 +1252,25 @@ export default function CarFlixApp() {
   const [showPost, setShowPost] = useState(false);
   const [showPostImport, setShowPostImport] = useState(false); // new: "Post an import" modal
   const [showFabMenu, setShowFabMenu] = useState(false); // new: FAB flyout (choose Uganda car vs import)
-  const [imports, setImports] = useState(MOCK_IMPORTS); // mock-only for now — see TODO near MOCK_IMPORTS
+  const fetchImports = async () => {
+  const { data, error } = await supabase
+    .from("imports")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("IMPORT FETCH ERROR:", error);
+    return;
+  }
+
+  console.log("IMPORTS FROM DB:", data);
+
+  setImports(data || []);
+};
+  useEffect(() => {
+  fetchImports();
+}, []);
+  const [imports, setImports] = useState([]);
   const [selectedCar, setSelectedCar] = useState(null);
   const [editCar, setEditCar] = useState(null);
   const [showAdmin, setShowAdmin] = useState(false);
