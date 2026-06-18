@@ -998,6 +998,25 @@ const PostImportModal = ({ onClose, onSave }) => {
   const [err, setErr] = useState("");
   const [uploading, setUploading] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const [currentUser, setCurrentUser] = useState(null);
+
+useEffect(() => {
+  const loadUser = async () => {
+    const { data } = await supabase.auth.getUser();
+
+    if (!data?.user) return;
+
+    const { data: profile } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", data.user.id)
+      .single();
+
+    setCurrentUser(profile);
+  };
+
+  loadUser();
+}, []);
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -1018,27 +1037,60 @@ const PostImportModal = ({ onClose, onSave }) => {
 
   const removeImg = (i) => setForm((f) => ({ ...f, images: f.images.filter((_, idx) => idx !== i) }));
 
-  const save = () => {
-    setErr("");
-    if (!form.carName || !form.price || !form.originCountry || !form.expectedArrival || !form.description) {
-      return setErr("Please fill all required fields.");
-    }
-    const newImport = {
-      id: `imp_${Date.now()}`,
-      carName: form.carName,
-      brand: form.brand,
-      price: Number(form.price),
-      location: "In transit", // keeps existing WaPickerModal message template working unchanged
-      originCountry: form.originCountry,
-      expectedArrival: form.expectedArrival,
-      condition: form.condition,
-      description: form.description,
-      images: form.images,
-    };
-    onSave(newImport);
-    onClose();
-  };
+  const save = async () => {
+  setErr("");
 
+  if (
+    !form.carName ||
+    !form.price ||
+    !form.originCountry ||
+    !form.expectedArrival ||
+    !form.description
+  ) {
+    return setErr("Please fill all required fields.");
+  }
+
+  if (!currentUser) {
+    return setErr("You must be logged in.");
+  }
+
+  const { data, error } = await supabase
+    .from("imports")
+    .insert([
+      {
+        owner_id: currentUser.id,
+
+        car_name: form.carName,
+        brand: form.brand,
+        price: Number(form.price),
+
+        origin_country: form.originCountry,
+
+        expected_arrival: form.expectedArrival,
+
+        condition: form.condition,
+
+        description: form.description,
+
+        images: form.images,
+
+        status: "pending",
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    console.error(error);
+    return setErr(error.message);
+  }
+
+  console.log("CURRENT IMPORT USER:", currentUser);
+
+  onSave(data);
+
+  onClose();
+};
   return (
     <div style={S.modalOverlay}>
       <div style={{ ...S.modal, maxHeight: "92vh" }}>
