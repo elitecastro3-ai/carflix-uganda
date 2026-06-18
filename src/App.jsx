@@ -118,6 +118,7 @@ const S = {
   },
   logoText: { color: WHITE, fontWeight: 900, fontSize: 20, letterSpacing: 1.5 },
   logoSub: { color: "rgba(255,255,255,0.6)", fontSize: 9, letterSpacing: 3, textTransform: "uppercase" },
+  logoPartner: { color: "rgba(255,255,255,0.6)", fontSize: 10, marginTop: 3, fontWeight: 500 },
   headerIcons: { display: "flex", gap: 8, alignItems: "center" },
   iconBtn: {
     background: "rgba(255,255,255,0.15)",
@@ -1191,6 +1192,9 @@ export default function CarFlixApp() {
 }, [user]);
   const [search, setSearch] = useState("");
   const [brandFilter, setBrandFilter] = useState("All");
+  const [showImportSearch, setShowImportSearch] = useState(false); // collapsible search toggle, Imports tab only
+  const [importSearch, setImportSearch] = useState("");
+  const [importBrandFilter, setImportBrandFilter] = useState("All");
   const [filters, setFilters] = useState({ brand: "All", condition: "Any Condition", location: "", minPrice: "", maxPrice: "" });
   const [showFilter, setShowFilter] = useState(false);
   const [showPost, setShowPost] = useState(false);
@@ -1392,6 +1396,13 @@ const handleWhatsAppInquiry = async (car) => {
   const savedCars = cars.filter(c => savedIds.includes(c.id));
   const myCars = user ? cars.filter(c => c.owner_id === user.id) : [];
 
+  const filteredImports = imports.filter(c => {
+    const q = importSearch.toLowerCase();
+    if (q && !c.carName.toLowerCase().includes(q) && !c.brand.toLowerCase().includes(q) && !c.originCountry.toLowerCase().includes(q) && !String(c.price).includes(q)) return false;
+    if (importBrandFilter !== "All" && c.brand !== importBrandFilter) return false;
+    return true;
+  });
+
   if (selectedCar) return (
     <CarDetail car={selectedCar} user={user} onBack={() => setSelectedCar(null)} savedIds={savedIds} onToggleSave={toggleSave} />
   );
@@ -1535,10 +1546,10 @@ const handleWhatsAppInquiry = async (car) => {
                 {/* HEADER */}
                 <div style={S.header}>
                   <div style={S.logo}>
-                    <div style={S.logoBox}><Icon name="admin" size={22} color={WHITE} /></div>
                     <div>
                       <div style={S.logoText}>CAR-FLIX</div>
                       <div style={S.logoSub}>UGANDA</div>
+                      <div style={S.logoPartner}>In partnership with Emma Investments</div>
                     </div>
                   </div>
                   <div style={S.headerIcons}>
@@ -1796,11 +1807,9 @@ const handleWhatsAppInquiry = async (car) => {
                   <div style={{ padding: 16 }}>
                     {/* Brand hero */}
                     <div style={{ background: `linear-gradient(135deg, ${RED_DARK} 0%, ${RED} 100%)`, borderRadius: 20, padding: "28px 24px", marginBottom: 14, textAlign: "center" }}>
-                      <div style={{ width: 60, height: 60, background: "rgba(255,255,255,0.15)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px", border: "1px solid rgba(255,255,255,0.25)" }}>
-                        <Icon name="admin" size={30} color={WHITE} />
-                      </div>
                       <h2 style={{ color: WHITE, fontWeight: 900, fontSize: 28, margin: "0 0 4px", letterSpacing: 2 }}>CAR-FLIX</h2>
                       <p style={{ color: "rgba(255,255,255,0.65)", margin: 0, fontSize: 12, letterSpacing: 4, textTransform: "uppercase" }}>Uganda</p>
+                      <p style={{ color: "rgba(255,255,255,0.6)", margin: "8px 0 0", fontSize: 12, fontWeight: 500 }}>In Partnership with Emma Investments</p>
                     </div>
 
                     {/* About card */}
@@ -1853,24 +1862,74 @@ const handleWhatsAppInquiry = async (car) => {
                   <div style={S.section}>
                     <div style={S.sectionRow}>
                       <span style={S.sectionTitle}>
-                        {imports.length} Car{imports.length !== 1 ? "s" : ""} Incoming
+                        {filteredImports.length} Car{filteredImports.length !== 1 ? "s" : ""} Incoming
                       </span>
-                      <span style={{ fontSize: 11, color: "#1D4ED8", fontWeight: 800, background: "#EFF6FF", border: "1px solid #BFDBFE", padding: "3px 10px", borderRadius: 20 }}>
-                        ✈️ ON THE WAY
-                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <button
+                          style={{ background: showImportSearch ? "#FDE8E8" : "#F0F2F5", border: "none", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                          onClick={() => setShowImportSearch(v => !v)}
+                          title="Search imports"
+                        >
+                          <Icon name="search" size={15} color={showImportSearch ? RED : "#8696A0"} />
+                        </button>
+                        <span style={{ fontSize: 11, color: "#1D4ED8", fontWeight: 800, background: "#EFF6FF", border: "1px solid #BFDBFE", padding: "3px 10px", borderRadius: 20, whiteSpace: "nowrap" }}>
+                          ✈️ ON THE WAY
+                        </span>
+                      </div>
                     </div>
-                    <p style={{ color: MUTED, fontSize: 13, lineHeight: 1.6, marginBottom: 18, marginTop: -4 }}>
+                    <p style={{ color: MUTED, fontSize: 13, lineHeight: 1.6, marginBottom: showImportSearch ? 14 : 18, marginTop: -4 }}>
                       These cars are currently being imported and aren't in Uganda yet. Tap "Notify Me" to get a WhatsApp update when one lands.
                     </p>
-                    {imports.length === 0 ? (
+
+                    {/* Collapsible search — same design language as Home */}
+                    {showImportSearch && (
+                      <div style={{ marginBottom: 16 }}>
+                        <div style={{ ...S.searchPill, marginBottom: 10 }}>
+                          <Icon name="search" size={17} color="#8696A0" />
+                          <input
+                            style={S.searchInput}
+                            placeholder="Search imports…"
+                            value={importSearch}
+                            onChange={e => setImportSearch(e.target.value)}
+                            autoFocus
+                          />
+                          {importSearch.length > 0 && (
+                            <button
+                              onClick={() => setImportSearch("")}
+                              style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", display: "flex", color: MUTED }}
+                            >
+                              <Icon name="close" size={16} color="#8696A0" />
+                            </button>
+                          )}
+                        </div>
+                        <div style={S.filterRow}>
+                          {BRANDS.map(b => (
+                            <button key={b} style={S.filterChip(importBrandFilter === b)} onClick={() => setImportBrandFilter(b)}>
+                              {b}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {filteredImports.length === 0 ? (
                       <div style={{ textAlign: "center", padding: "48px 0 32px", color: MUTED }}>
                         <Icon name="shipping" size={44} color="#E5E7EB" />
-                        <p style={{ marginTop: 14, fontWeight: 600, fontSize: 15, color: "#9CA3AF" }}>No imports right now</p>
-                        <p style={{ margin: "4px 0 0", fontSize: 13, color: "#C4C4C4" }}>Check back soon for new arrivals</p>
+                        {imports.length === 0 ? (
+                          <>
+                            <p style={{ marginTop: 14, fontWeight: 600, fontSize: 15, color: "#9CA3AF" }}>No imports right now</p>
+                            <p style={{ margin: "4px 0 0", fontSize: 13, color: "#C4C4C4" }}>Check back soon for new arrivals</p>
+                          </>
+                        ) : (
+                          <>
+                            <p style={{ marginTop: 14, fontWeight: 600, fontSize: 15, color: "#9CA3AF" }}>No matches found</p>
+                            <p style={{ margin: "4px 0 0", fontSize: 13, color: "#C4C4C4" }}>Try a different search or brand</p>
+                          </>
+                        )}
                       </div>
                     ) : (
                       <>
-                        {imports.map(car => <ImportCard key={car.id} car={car} />)}
+                        {filteredImports.map(car => <ImportCard key={car.id} car={car} />)}
                       </>
                     )}
                   </div>
