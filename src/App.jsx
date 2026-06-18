@@ -19,10 +19,10 @@ const MOCK_CARS = [
 // TODO(backend): swap this for `await supabase.from("imports").select("*")`
 // once an `imports` table exists, the same way MOCK_CARS was swapped for `cars`.
 const MOCK_IMPORTS = [
-  { id: "imp1", carName: "Alphard 2022", brand: "Toyota", price: 145000000, location: "In transit", importingFrom: "Japan", expectedArrival: "Aug 2026", condition: "Foreign Used", description: "Toyota Alphard 2022, twin power doors, full leather. Currently on shipment from Japan.", images: ["https://images.unsplash.com/photo-1617469767053-d3b523a0b982?w=400&q=80"] },
-  { id: "imp2", carName: "RX 350 2021", brand: "Lexus", price: 165000000, location: "In transit", importingFrom: "UAE", expectedArrival: "Jul 2026", condition: "Foreign Used", description: "Lexus RX 350 F-Sport 2021, low mileage, full options. Awaiting customs clearance.", images: [] },
-  { id: "imp3", carName: "CX-5 2022", brand: "Mazda", price: 98000000, location: "In transit", importingFrom: "Japan", expectedArrival: "Sep 2026", condition: "Foreign Used", description: "Mazda CX-5 2022, AWD, sunroof. Booked on next vessel from Japan.", images: ["https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=400&q=80"] },
-  { id: "imp4", carName: "Outback 2020", brand: "Subaru", price: 88000000, location: "In transit", importingFrom: "USA", expectedArrival: "Aug 2026", condition: "Foreign Used", description: "Subaru Outback 2020, AWD, towbar fitted. In transit, dock ETA confirmed.", images: [] },
+  { id: "imp1", carName: "Alphard 2022", brand: "Toyota", price: 145000000, location: "In transit", originCountry: "Japan", expectedArrival: "Aug 2026", condition: "Foreign Used", description: "Toyota Alphard 2022, twin power doors, full leather. Currently on shipment from Japan.", images: ["https://images.unsplash.com/photo-1617469767053-d3b523a0b982?w=400&q=80"] },
+  { id: "imp2", carName: "RX 350 2021", brand: "Lexus", price: 165000000, location: "In transit", originCountry: "UAE", expectedArrival: "Jul 2026", condition: "Foreign Used", description: "Lexus RX 350 F-Sport 2021, low mileage, full options. Awaiting customs clearance.", images: [] },
+  { id: "imp3", carName: "CX-5 2022", brand: "Mazda", price: 98000000, location: "In transit", originCountry: "Japan", expectedArrival: "Sep 2026", condition: "Foreign Used", description: "Mazda CX-5 2022, AWD, sunroof. Booked on next vessel from Japan.", images: ["https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=400&q=80"] },
+  { id: "imp4", carName: "Outback 2020", brand: "Subaru", price: 88000000, location: "In transit", originCountry: "USA", expectedArrival: "Aug 2026", condition: "Foreign Used", description: "Subaru Outback 2020, AWD, towbar fitted. In transit, dock ETA confirmed.", images: [] },
 ];
 
 const BRANDS = ["All", "Toyota", "Mercedes-Benz", "BMW", "Nissan", "Honda", "Subaru", "Ford", "Mazda", "Land Rover", "Volkswagen", "Suzuki", "Mitsubishi", "Volvo", "Jeep", "Other"];
@@ -1117,8 +1117,8 @@ useEffect(() => {
         <label style={S.label}>Price (UGX) *</label>
         <input style={S.input} type="number" placeholder="e.g. 145000000" value={form.price} onChange={set("price")} />
 
-        <label style={S.label}>Importing From *</label>
-        <input style={S.input} placeholder="e.g. Japan, UAE, UK" value={form.importingFrom} onChange={set("importingFrom")} />
+        <label style={S.label}>Origin Country *</label>
+        <input style={S.input} placeholder="e.g. Japan, UAE, UK" value={form.originCountry} onChange={set("originCountry")} />
 
         <label style={S.label}>Expected Arrival *</label>
         <input style={S.input} placeholder="e.g. Aug 2026" value={form.expectedArrival} onChange={set("expectedArrival")} />
@@ -1450,7 +1450,7 @@ const handleWhatsAppInquiry = async (car) => {
 
   const filteredImports = imports.filter(c => {
     const q = importSearch.toLowerCase();
-    if (q && !c.carName.toLowerCase().includes(q) && !c.brand.toLowerCase().includes(q) && !c.importingFrom.toLowerCase().includes(q) && !String(c.price).includes(q)) return false;
+    if (q && !c.carName.toLowerCase().includes(q) && !c.brand.toLowerCase().includes(q) && !c.originCountry.toLowerCase().includes(q) && !String(c.price).includes(q)) return false;
     if (importBrandFilter !== "All" && c.brand !== importBrandFilter) return false;
     return true;
   });
@@ -1565,7 +1565,7 @@ const handleWhatsAppInquiry = async (car) => {
         <p style={{ color: RED, fontWeight: 800, fontSize: 15, margin: "0 0 8px" }}>{formatPrice(car.price)}</p>
         <div style={S.importEtaRow}>
           <Icon name="info" size={13} color="#92400E" />
-          ETA {car.expectedArrival} · from {car.importingFrom}
+          ETA {car.expectedArrival} · from {car.originCountry}
         </div>
         <button style={S.notifyBtn} onClick={() => openWa(car)}>
           <Icon name="whatsapp" size={15} color={WHITE} /> Notify Me
