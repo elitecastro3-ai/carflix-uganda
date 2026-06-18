@@ -994,7 +994,7 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
 // PostCarModal writes to `cars`. For now this only updates local `imports` state
 // (passed in as `onSave`), so submissions don't persist across a page refresh.
 const PostImportModal = ({ onClose, onSave }) => {
-  const [form, setForm] = useState({ carName: "", brand: "Toyota", price: "", originCounty: "", expectedArrival: "", condition: "Foreign Used", description: "", images: [] });
+  const [form, setForm] = useState({ carName: "", brand: "Toyota", price: "", originCountry: "", expectedArrival: "", condition: "Foreign Used", description: "", images: [] });
   const [err, setErr] = useState("");
   const [uploading, setUploading] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -1041,14 +1041,14 @@ useEffect(() => {
   setErr("");
 
   if (
-    !form.carName ||
-    !form.price ||
-    !form.importingFrom ||
-    !form.expectedArrival ||
-    !form.description
-  ) {
-    return setErr("Please fill all required fields.");
-  }
+  !form.carName ||
+  !form.price ||
+  !form.originCountry ||
+  !form.expectedArrival ||
+  !form.description
+) {
+  return setErr("Please fill all required fields.");
+}
 
   if (!currentUser) {
     return setErr("You must be logged in.");
