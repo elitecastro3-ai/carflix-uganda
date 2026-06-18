@@ -118,7 +118,7 @@ const S = {
   },
   logoText: { color: WHITE, fontWeight: 900, fontSize: 20, letterSpacing: 1.5 },
   logoSub: { color: "rgba(255,255,255,0.6)", fontSize: 9, letterSpacing: 3, textTransform: "uppercase" },
-  logoPartner: { color: "rgba(255,255,255,0.6)", fontSize: 10, marginTop: 3, fontWeight: 500 },
+  logoPartner: { color: "rgba(255,255,255,0.85)", fontSize: 12, marginTop: 4, fontWeight: 700, letterSpacing: 0.3 },
   headerIcons: { display: "flex", gap: 8, alignItems: "center" },
   iconBtn: {
     background: "rgba(255,255,255,0.15)",
@@ -1545,8 +1545,8 @@ const handleWhatsAppInquiry = async (car) => {
 
                 {/* HEADER */}
                 <div style={S.header}>
-                  <div style={S.logo}>
-                    <div>
+                  <div style={{ ...S.logo, flex: 1 }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
                       <div style={S.logoText}>CAR-FLIX</div>
                       <div style={S.logoSub}>UGANDA</div>
                       <div style={S.logoPartner}>In partnership with Emma Investments</div>
@@ -1805,7 +1805,17 @@ const handleWhatsAppInquiry = async (car) => {
                 {/* ABOUT TAB */}
                 {tab === "about" && (
                   <div style={{ padding: 16 }}>
-                    {/* Brand hero */}
+                    {/* Top bar — sign out only */}
+                    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
+                      {user && (
+                        <button
+                          onClick={logout}
+                          style={{ display: "flex", alignItems: "center", gap: 7, background: "#FFF0F0", border: `1.5px solid ${RED}`, borderRadius: 22, padding: "9px 18px", cursor: "pointer", color: RED, fontWeight: 800, fontSize: 13, fontFamily: "inherit" }}
+                        >
+                          <Icon name="logout" size={16} color={RED} /> Sign Out
+                        </button>
+                      )}
+                    </div>
                     <div style={{ background: `linear-gradient(135deg, ${RED_DARK} 0%, ${RED} 100%)`, borderRadius: 20, padding: "28px 24px", marginBottom: 14, textAlign: "center" }}>
                       <h2 style={{ color: WHITE, fontWeight: 900, fontSize: 28, margin: "0 0 4px", letterSpacing: 2 }}>CAR-FLIX</h2>
                       <p style={{ color: "rgba(255,255,255,0.65)", margin: 0, fontSize: 12, letterSpacing: 4, textTransform: "uppercase" }}>Uganda</p>
@@ -1866,11 +1876,11 @@ const handleWhatsAppInquiry = async (car) => {
                       </span>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <button
-                          style={{ background: showImportSearch ? "#FDE8E8" : "#F0F2F5", border: "none", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                          style={{ background: showImportSearch ? "#FDE8E8" : "#F0F2F5", border: showImportSearch ? `1.5px solid ${RED}` : "1.5px solid #E5E7EB", borderRadius: "50%", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: showImportSearch ? "0 2px 8px rgba(183,28,28,0.18)" : "0 1px 4px rgba(0,0,0,0.08)" }}
                           onClick={() => setShowImportSearch(v => !v)}
                           title="Search imports"
                         >
-                          <Icon name="search" size={15} color={showImportSearch ? RED : "#8696A0"} />
+                          <Icon name="search" size={20} color={showImportSearch ? RED : "#4B5563"} />
                         </button>
                         <span style={{ fontSize: 11, color: "#1D4ED8", fontWeight: 800, background: "#EFF6FF", border: "1px solid #BFDBFE", padding: "3px 10px", borderRadius: 20, whiteSpace: "nowrap" }}>
                           ✈️ ON THE WAY
