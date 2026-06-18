@@ -1805,23 +1805,6 @@ const handleWhatsAppInquiry = async (car) => {
                 {/* ABOUT TAB */}
                 {tab === "about" && (
                   <div style={{ padding: 16 }}>
-                    {/* Top bar — sign out only */}
-                    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
-                      {user && (
-                        <button
-                          onClick={logout}
-                          style={{ display: "flex", alignItems: "center", gap: 7, background: "#FFF0F0", border: `1.5px solid ${RED}`, borderRadius: 22, padding: "9px 18px", cursor: "pointer", color: RED, fontWeight: 800, fontSize: 13, fontFamily: "inherit" }}
-                        >
-                          <Icon name="logout" size={16} color={RED} /> Sign Out
-                        </button>
-                      )}
-                    </div>
-                    <div style={{ background: `linear-gradient(135deg, ${RED_DARK} 0%, ${RED} 100%)`, borderRadius: 20, padding: "28px 24px", marginBottom: 14, textAlign: "center" }}>
-                      <h2 style={{ color: WHITE, fontWeight: 900, fontSize: 28, margin: "0 0 4px", letterSpacing: 2 }}>CAR-FLIX</h2>
-                      <p style={{ color: "rgba(255,255,255,0.65)", margin: 0, fontSize: 12, letterSpacing: 4, textTransform: "uppercase" }}>Uganda</p>
-                      <p style={{ color: "rgba(255,255,255,0.6)", margin: "8px 0 0", fontSize: 12, fontWeight: 500 }}>In Partnership with Emma Investments</p>
-                    </div>
-
                     {/* About card */}
                     <div style={{ background: CARD, borderRadius: 16, padding: 18, marginBottom: 12, boxShadow: "0 1px 6px rgba(0,0,0,0.06)", border: `1px solid ${BORDER}` }}>
                       <h3 style={{ fontWeight: 800, fontSize: 16, color: TEXT, marginTop: 0, marginBottom: 10 }}>About CAR-FLIX</h3>
