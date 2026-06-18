@@ -1255,7 +1255,7 @@ export default function CarFlixApp() {
   const fetchImports = async () => {
   const { data, error } = await supabase
     .from("imports")
-    .select("*")
+    .select("*, users(phone)")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -1263,9 +1263,17 @@ export default function CarFlixApp() {
     return;
   }
 
-  console.log("IMPORTS FROM DB:", data);
+  // Normalise DB column names to UI field names and attach owner phone
+  const normalised = (data || []).map(row => ({
+    ...row,
+    carName:         row.car_name         || row.carName         || "",
+    originCountry:   row.importing_from   || row.originCountry   || "",
+    expectedArrival: row.expected_arrival || row.expectedArrival || "",
+    owner_phone:     row.users?.phone     || row.owner_phone     || null,
+  }));
 
-  setImports(data || []);
+  console.log("IMPORTS FROM DB (normalised):", normalised);
+  setImports(normalised);
 };
   useEffect(() => {
   fetchImports();
@@ -1564,12 +1572,45 @@ const handleWhatsAppInquiry = async (car) => {
     </div>
   );
 
-  // ── Import card (Imports tab — incoming cars, no "View" since there's nothing in-country yet)
-  const ImportCard = ({ car }) => (
+  // ── Import card (Imports tab — multi-image swipe, no "View" since car isn't in-country yet)
+  function ImportCard({ car }) {
+    const [imgIdx, setImgIdx] = useState(0);
+    const imgs = Array.isArray(car.images) && car.images.length > 0 ? car.images : null;
+    return (
     <div style={S.importCard}>
-      <div style={{ position: "relative" }}>
-        {Array.isArray(car.images) && car.images.length > 0 ? (
-          <img src={car.images[0]} alt={car.carName} style={S.cardImg} />
+      <div style={{ position: "relative", background: "#EEE" }}>
+        {imgs ? (
+          <>
+            <img src={imgs[imgIdx]} alt={car.carName} style={S.cardImg} />
+            {/* Prev / Next arrows — only when more than 1 image */}
+            {imgs.length > 1 && (
+              <>
+                <button
+                  onClick={e => { e.stopPropagation(); setImgIdx(i => (i - 1 + imgs.length) % imgs.length); }}
+                  style={{ position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.38)", border: "none", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 3, padding: 0 }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                </button>
+                <button
+                  onClick={e => { e.stopPropagation(); setImgIdx(i => (i + 1) % imgs.length); }}
+                  style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.38)", border: "none", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 3, padding: 0 }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+                </button>
+                {/* Dot indicators */}
+                <div style={{ position: "absolute", bottom: 7, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 5, zIndex: 3 }}>
+                  {imgs.map((_, i) => (
+                    <div key={i} onClick={e => { e.stopPropagation(); setImgIdx(i); }}
+                      style={{ width: i === imgIdx ? 18 : 6, height: 6, borderRadius: 3, background: i === imgIdx ? WHITE : "rgba(255,255,255,0.55)", cursor: "pointer", transition: "all 0.2s" }} />
+                  ))}
+                </div>
+                {/* Image counter badge */}
+                <div style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(0,0,0,0.5)", borderRadius: 10, padding: "2px 7px", fontSize: 10, color: WHITE, fontWeight: 700, zIndex: 3 }}>
+                  {imgIdx + 1}/{imgs.length}
+                </div>
+              </>
+            )}
+          </>
         ) : (
           <div style={S.noPhoto}>
             <Icon name="photo" size={28} color="#D1D5DB" />
@@ -1578,21 +1619,58 @@ const handleWhatsAppInquiry = async (car) => {
         )}
         <span style={S.importBadge}>✈️ Importing</span>
       </div>
-      <div style={{ padding: "12px 14px 14px" }}>
-        <p style={{ fontWeight: 700, fontSize: 14, color: TEXT, margin: "0 0 3px" }}>{car.carName}</p>
-        <p style={{ color: RED, fontWeight: 800, fontSize: 15, margin: "0 0 8px" }}>{formatPrice(car.price)}</p>
+      <div style={{ padding: "12px 14px 16px" }}>
+        {/* Car name + brand */}
+        <p style={{ fontWeight: 800, fontSize: 15, color: TEXT, margin: "0 0 2px", lineHeight: 1.3 }}>{car.carName}</p>
+        <p style={{ fontSize: 12, color: MUTED, fontWeight: 600, margin: "0 0 6px" }}>{car.brand}</p>
+        {/* Price */}
+        <p style={{ color: RED, fontWeight: 900, fontSize: 16, margin: "0 0 8px" }}>{formatPrice(car.price)}</p>
+        {/* ETA row */}
         <div style={S.importEtaRow}>
-          <Icon name="info" size={13} color="#92400E" />
+          <Icon name="shipping" size={13} color="#92400E" />
           ETA {car.expectedArrival} · from {car.originCountry}
         </div>
-        <button style={S.notifyBtn} onClick={() => openWa(car)}>
+        {/* Condition pill */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+          <span style={{ background: "#EFF6FF", color: "#1D4ED8", fontSize: 11, fontWeight: 700, borderRadius: 20, padding: "4px 10px", border: "1px solid #BFDBFE" }}>
+            {car.condition}
+          </span>
+        </div>
+        {/* Description */}
+        {car.description ? (
+          <p style={{ fontSize: 12, color: MUTED, lineHeight: 1.6, margin: "0 0 12px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+            {car.description}
+          </p>
+        ) : null}
+        {/* Notify Me — opens seller's WhatsApp */}
+        <button
+          style={S.notifyBtn}
+          onClick={() => {
+            if (!car.owner_phone) { alert("Seller contact not available"); return; }
+            const raw = String(car.owner_phone).trim();
+            const phone = raw.startsWith("0") ? "256" + raw.slice(1) : raw.replace(/^\+/, "");
+            const msg = "Hello 👋
+
+I saw your import listing on CAR-FLIX Uganda:
+
+" +
+              "🚗 " + car.carName + "
+" +
+              "💰 " + formatPrice(car.price) + "
+" +
+              "✈️ Arriving: " + (car.expectedArrival || "TBA") + " from " + (car.originCountry || "TBA") + "
+
+" +
+              "I'm interested — please keep me posted!";
+            window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(msg), "_blank");
+          }}
+        >
           <Icon name="whatsapp" size={15} color={WHITE} /> Notify Me
         </button>
       </div>
     </div>
-  );
-
-  
+    );
+  }
 
   
   return (
