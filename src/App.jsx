@@ -29,7 +29,7 @@ const BRANDS = ["All", "Toyota", "Mercedes-Benz", "BMW", "Nissan", "Honda", "Sub
 const CONDITIONS = ["Any Condition", "New", "Used", "Foreign Used", "Local Used"];
 const WA_NUMBERS = [
   { label: "CAR-FLIX Line 1", number: "256708866140", display: "0708 866 140" },
-  { label: "CAR-FLIX Line 2", number: "256747147277", display: "0787 981 089" },
+  { label: "CAR-FLIX Line 2", number: "256787981089", display: "0787 981 089" },
   { label: "CAR-FLIX Line 3", number: "256706018343", display: "0706 018 343" },
 ];
 
