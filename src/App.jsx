@@ -1025,9 +1025,9 @@ useEffect(() => {
     let uploadedUrls = [];
     for (let file of files) {
       const fileName = `${Date.now()}-${file.name}`;
-      const { error } = await supabase.storage.from("cars").upload(fileName, file);
+      const { error } = await supabase.storage.from("imports").upload(fileName, file);
       if (error) { setUploading(false); return setErr("Upload failed"); }
-      const { data } = supabase.storage.from("cars").getPublicUrl(fileName);
+      const { data } = supabase.storage.from("imports").getPublicUrl(fileName);
       uploadedUrls.push(data.publicUrl);
     }
     setForm((prev) => ({ ...prev, images: [...prev.images, ...uploadedUrls] }));
