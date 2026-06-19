@@ -1649,20 +1649,20 @@ const handleWhatsAppInquiry = async (car) => {
             if (!car.owner_phone) { alert("Seller contact not available"); return; }
             const raw = String(car.owner_phone).trim();
             const phone = raw.startsWith("0") ? "256" + raw.slice(1) : raw.replace(/^\+/, "");
-            const msg = "Hello 👋
+            const msg = `Hello 👋
 
 I saw your import listing on CAR-FLIX Uganda:
 
-" +
-              "🚗 " + car.carName + "
-" +
-              "💰 " + formatPrice(car.price) + "
-" +
-              "✈️ Arriving: " + (car.expectedArrival || "TBA") + " from " + (car.originCountry || "TBA") + "
+🚗 ${car.carName}
+💰 ${formatPrice(car.price)}
+✈️ Arriving: ${car.expectedArrival || "TBA"} from ${car.originCountry || "TBA"}
 
-" +
-              "I'm interested — please keep me posted!";
-            window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(msg), "_blank");
+I'm interested — please keep me posted!`; 
+
+            window.open(
+              "https://wa.me/" + phone + "?text=" + encodeURIComponent(msg),
+              "_blank"
+            );
           }}
         >
           <Icon name="whatsapp" size={15} color={WHITE} /> Notify Me
