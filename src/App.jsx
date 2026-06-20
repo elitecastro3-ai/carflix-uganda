@@ -658,10 +658,17 @@ const AuthModal = ({ onClose, onLogin }) => {
       setLoading(false);
       return setErr("Passwords do not match");
     }
-    const { data, error } = await supabase.auth.signUp({ email: form.email, password: form.password });
-    if (error) { setLoading(false); return setErr(error.message); }
-    const { error: insertError } = await supabase.from("users").insert([{ id: data.user?.id, username: form.username, phone: form.phone, is_admin: false }]);
-    if (insertError) { setLoading(false); return setErr(insertError.message); }
+    const { data, error } = await supabase.auth.signUp({
+  email: form.email,
+  password: form.password,
+});
+
+console.log("AUTH USER ID:", data.user?.id);
+
+if (error) {
+  setLoading(false);
+  return setErr(error.message);
+}
     localStorage.setItem("lastEmail", form.email);
     setLoading(false);
     alert("Account created! Now login.");
