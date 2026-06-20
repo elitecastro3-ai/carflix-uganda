@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AdminDashboard from "./AdminDashboard";
 import { supabase } from "./supabase";
-
+import { Turnstile } from "@marsidev/react-turnstile";
 // ── MOCK DATA ──────────────────────────────────────────────────────────────────
 const MOCK_CARS = [
   { id: "1", carName: "Noah", brand: "Toyota", price: 45000000, location: "Nakawa", condition: "Used", description: "Well maintained Toyota Noah, 7-seater, fuel efficient. Excellent condition for family use.", images: ["https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=400&q=80"], ownerId: "u1", badge: "New", featured: false },
@@ -640,6 +640,7 @@ const AuthModal = ({ onClose, onLogin }) => {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   useEffect(() => {
@@ -650,6 +651,12 @@ const AuthModal = ({ onClose, onLogin }) => {
   const handleRegister = async () => {
     setErr("");
     setLoading(true);
+
+    if (!captchaToken) {
+      setLoading(false);
+      return setErr("Please complete the captcha.");
+    }
+
     if (!form.username || !form.email || !form.phone || !form.password) {
       setLoading(false);
       return setErr("All fields are required.");
@@ -694,6 +701,12 @@ console.log("INSERT ERROR:", insertError);
   const handleLogin = async () => {
     setErr("");
     setLoading(true);
+
+    if (!captchaToken) {
+      setLoading(false);
+      return setErr("Please complete the captcha.");
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password });
     if (error) { setLoading(false); return setErr(error.message); }
     localStorage.setItem("lastEmail", form.email);
@@ -767,6 +780,13 @@ console.log("INSERT ERROR:", insertError);
             <p style={{ ...S.errorTxt, margin: 0 }}>{err}</p>
           </div>
         )}
+
+        <Turnstile
+          siteKey="0x4AAAAAADoR_esu9IS5h92R"
+          onSuccess={(token) => {
+            setCaptchaToken(token);
+          }}
+        />
 
         <button
           style={{ ...S.primaryBtn, marginTop: 8, opacity: loading ? 0.7 : 1, cursor: loading ? "not-allowed" : "pointer" }}
