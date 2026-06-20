@@ -664,6 +664,8 @@ const AuthModal = ({ onClose, onLogin }) => {
 });
 
 console.log("AUTH USER ID:", data.user?.id);
+console.log("USER:", data.user);
+console.log("SESSION:", data.session);
 
 if (error) {
   setLoading(false);
