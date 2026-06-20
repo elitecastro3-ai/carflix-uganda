@@ -666,9 +666,12 @@ const AuthModal = ({ onClose, onLogin }) => {
       return setErr("Passwords do not match");
     }
     const { data, error } = await supabase.auth.signUp({
-  email: form.email,
-  password: form.password,
-});
+      email: form.email,
+      password: form.password,
+      options: {
+        captchaToken,
+      },
+    });
 
 console.log("AUTH USER ID:", data.user?.id);
 console.log("USER:", data.user);
@@ -706,8 +709,14 @@ console.log("INSERT ERROR:", insertError);
       setLoading(false);
       return setErr("Please complete the captcha.");
     }
-
-    const { error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password });
+console.log("CAPTCHA TOKEN:", captchaToken);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: form.email,
+      password: form.password,
+      options: {
+        captchaToken,
+      },
+    });
     if (error) { setLoading(false); return setErr(error.message); }
     localStorage.setItem("lastEmail", form.email);
     onLogin(form.email, form.password);
