@@ -669,6 +669,20 @@ if (error) {
   setLoading(false);
   return setErr(error.message);
 }
+    const { data: insertedUser, error: insertError } = await supabase
+  .from("users")
+  .insert([
+    {
+      id: data.user?.id,
+      username: form.username,
+      phone: form.phone,
+      is_admin: false,
+    },
+  ])
+  .select();
+
+console.log("INSERTED USER:", insertedUser);
+console.log("INSERT ERROR:", insertError);
     localStorage.setItem("lastEmail", form.email);
     setLoading(false);
     alert("Account created! Now login.");
