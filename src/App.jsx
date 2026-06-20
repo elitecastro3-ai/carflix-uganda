@@ -1006,13 +1006,14 @@ useEffect(() => {
 
     if (!data?.user) return;
 
-    const { data: profile } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", data.user.id)
-      .single();
+const { data: profile, error } = await supabase
+  .from("users")
+  .select("*")
+  .eq("id", data.user.id)
+  .single();
 
-    setCurrentUser(profile);
+console.log("PROFILE:", profile);
+console.log("PROFILE ERROR:", error);
   };
 
   loadUser();
