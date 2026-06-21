@@ -640,6 +640,7 @@ const AuthModal = ({ onClose, onLogin }) => {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [captchaReady, setCaptchaReady] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -722,7 +723,13 @@ console.log("LOGIN DATA:", data);
 console.log("LOGIN ERROR:", error);
     if (error) { setLoading(false); return setErr(error.message); }
     localStorage.setItem("lastEmail", form.email);
-    //onLogin(form.email, form.password);
+    const { data: profile } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", data.user.id)
+      .single();
+
+onLogin(profile);
     setLoading(false);
   };
 
@@ -793,8 +800,17 @@ console.log("LOGIN ERROR:", error);
           </div>
         )}
 
+        {!captchaReady && (
+          <p style={{ textAlign: "center", fontSize: 14 }}>
+            Loading security check...
+          </p>
+          )}
+
         <Turnstile
           siteKey="0x4AAAAAADoR_esu9IS5h92R"
+          onLoad={() => {
+            setCaptchaReady(true);
+          }}
           onSuccess={(token) => {
             console.log("TURNSTILE TOKEN:", token);
             setCaptchaToken(token);
@@ -1497,13 +1513,10 @@ const handleWhatsAppInquiry = async (car) => {
     }
   }
 };
-  const login = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return alert(error.message);
-    const { data: profile } = await supabase.from("users").select("*").eq("id", data.user.id).single();
+  const login = (profile) => {
     setUser(profile);
     setShowAuth(false);
-  };
+};
 
   const logout = async () => {
     await supabase.auth.signOut();
