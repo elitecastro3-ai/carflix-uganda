@@ -722,7 +722,7 @@ console.log("LOGIN DATA:", data);
 console.log("LOGIN ERROR:", error);
     if (error) { setLoading(false); return setErr(error.message); }
     localStorage.setItem("lastEmail", form.email);
-    onLogin(form.email, form.password);
+    //onLogin(form.email, form.password);
     setLoading(false);
   };
 
