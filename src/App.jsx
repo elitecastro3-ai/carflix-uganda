@@ -710,13 +710,16 @@ console.log("INSERT ERROR:", insertError);
       return setErr("Please complete the captcha.");
     }
 console.log("CAPTCHA TOKEN:", captchaToken);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: form.email,
-      password: form.password,
-      options: {
-        captchaToken,
-      },
-    });
+    const { data, error } = await supabase.auth.signInWithPassword({
+  email: form.email,
+  password: form.password,
+  options: {
+    captchaToken,
+  },
+});
+
+console.log("LOGIN DATA:", data);
+console.log("LOGIN ERROR:", error);
     if (error) { setLoading(false); return setErr(error.message); }
     localStorage.setItem("lastEmail", form.email);
     onLogin(form.email, form.password);
@@ -793,6 +796,7 @@ console.log("CAPTCHA TOKEN:", captchaToken);
         <Turnstile
           siteKey="0x4AAAAAADoR_esu9IS5h92R"
           onSuccess={(token) => {
+            console.log("TURNSTILE TOKEN:", token);
             setCaptchaToken(token);
           }}
         />
