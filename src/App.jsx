@@ -1084,8 +1084,14 @@ const { data: profile, error } = await supabase
   .eq("id", data.user.id)
   .single();
 
+if (error) {
+  console.error(error);
+  return;
+}
+
+setCurrentUser(profile);
+
 console.log("PROFILE:", profile);
-console.log("PROFILE ERROR:", error);
   };
 
   loadUser();
@@ -1122,6 +1128,8 @@ console.log("PROFILE ERROR:", error);
 ) {
   return setErr("Please fill all required fields.");
 }
+
+console.log("CURRENT USER:", currentUser);
 
   if (!currentUser) {
     return setErr("You must be logged in.");
