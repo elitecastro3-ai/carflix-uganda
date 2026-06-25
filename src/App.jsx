@@ -1296,6 +1296,14 @@ export default function CarFlixApp() {
     await refresh();
   };
 
+  // New: mirrors deleteCar above, but for the "imports" table.
+  const deleteImport = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this import?")) return;
+    const { error } = await supabase.from("imports").delete().eq("id", id);
+    if (error) { alert(error.message); return; }
+    await fetchImports();
+  };
+
   const [savedIds, setSavedIds] = useState([]);
   useEffect(() => {
 
@@ -1354,6 +1362,7 @@ export default function CarFlixApp() {
   const [imports, setImports] = useState([]);
   const [selectedCar, setSelectedCar] = useState(null);
   const [editCar, setEditCar] = useState(null);
+  const [manageTab, setManageTab] = useState("cars"); // new: "My Cars" / "My Imports" segmented toggle inside the My Listings tab
   const [showAdmin, setShowAdmin] = useState(false);
   const [showWaPicker, setShowWaPicker] = useState(false);
   const [waCarContext, setWaCarContext] = useState(null);
@@ -1543,6 +1552,7 @@ const handleWhatsAppInquiry = async (car) => {
   const featuredCars = cars.filter(car => car.featured);
   const savedCars = cars.filter(c => savedIds.includes(c.id));
   const myCars = user ? cars.filter(c => c.owner_id === user.id) : [];
+  const myImports = user ? imports.filter(c => c.owner_id === user.id) : []; // new: mirrors myCars, for the My Imports segment
 
   const filteredImports = imports.filter(c => {
     const q = importSearch.toLowerCase();
@@ -1980,6 +1990,18 @@ I'm interested — please keep me posted!`;
                       </div>
                     ) : (
                       <>
+                        {/* New: segmented toggle between My Cars and My Imports — reuses the existing filterChip style */}
+                        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+                          <button style={{ ...S.filterChip(manageTab === "cars"), flex: 1, textAlign: "center" }} onClick={() => setManageTab("cars")}>
+                            My Cars
+                          </button>
+                          <button style={{ ...S.filterChip(manageTab === "imports"), flex: 1, textAlign: "center" }} onClick={() => setManageTab("imports")}>
+                            My Imports
+                          </button>
+                        </div>
+
+                        {manageTab === "cars" && (
+                        <>
                         <button
                           style={{ ...S.primaryBtn, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 18 }}
                           onClick={() => setShowPost(true)}
@@ -2015,6 +2037,53 @@ I'm interested — please keep me posted!`;
                             </div>
                           </div>
                         ))}
+                        </>
+                        )}
+
+                        {/* New: My Imports segment — same card layout/pattern as My Cars above, reading from `imports` instead of `cars` */}
+                        {manageTab === "imports" && (
+                        <>
+                        <button
+                          style={{ ...S.primaryBtn, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 18 }}
+                          onClick={() => setShowPostImport(true)}
+                        >
+                          <Icon name="plus" size={18} color={WHITE} /> Post New Import
+                        </button>
+                        {myImports.length === 0 ? (
+                          <div style={{ textAlign: "center", padding: "32px 0", color: MUTED }}>
+                            <Icon name="shipping" size={40} color="#E5E7EB" />
+                            <p style={{ marginTop: 12, fontWeight: 600 }}>You have no active imports.</p>
+                          </div>
+                        ) : myImports.map(car => (
+                          <div key={car.id} style={{ background: CARD, borderRadius: 14, padding: 14, marginBottom: 10, display: "flex", gap: 12, alignItems: "center", boxShadow: "0 1px 6px rgba(0,0,0,0.06)", border: `1px solid ${BORDER}` }}>
+                            {car.images?.length > 0 && car.images[0] ? (
+                              <img src={car.images[0]} alt="" style={{ width: 68, height: 56, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
+                            ) : (
+                              <div style={{ width: 68, height: 56, borderRadius: 10, background: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                <Icon name="photo" size={24} color="#D1D5DB" />
+                              </div>
+                            )}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ fontWeight: 700, fontSize: 14, margin: "0 0 2px", color: TEXT, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{car.carName}</p>
+                              <p style={{ color: RED, fontWeight: 800, fontSize: 13, margin: "0 0 2px" }}>{formatPrice(car.price)}</p>
+                              <p style={{ color: MUTED, fontSize: 12, margin: 0 }}>{car.originCountry} · {car.expectedArrival}</p>
+                            </div>
+                            <div style={{ display: "flex", gap: 6 }}>
+                              <button
+                                onClick={() => alert("Editing imports isn't wired up yet — only delete is available for now.")}
+                                style={{ background: "#EFF6FF", border: "none", borderRadius: 10, padding: 9, cursor: "pointer", opacity: 0.5 }}
+                                title="Editing imports is coming soon"
+                              >
+                                <Icon name="edit" size={16} color="#1D4ED8" />
+                              </button>
+                              <button onClick={() => deleteImport(car.id)} style={{ background: "#FFF0F0", border: "none", borderRadius: 10, padding: 9, cursor: "pointer" }}>
+                                <Icon name="delete" size={16} color={RED} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        </>
+                        )}
                       </>
                     )}
                   </div>
