@@ -1297,14 +1297,7 @@ export default function CarFlixApp() {
   const [tab, setTab] = useState("home");
   const [cars, setCars] = useState([]);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-if (!user) {
-  alert("Please log in to contact the seller.");
-  return;
-}
+  
 
   const deleteCar = async (id) => {
     if (!window.confirm("Are you sure you want to delete this car?")) return;
@@ -1440,30 +1433,52 @@ useEffect(() => {
   fetchInquiries();
 }, []);
 
-const { error } = await supabase
-  .from("seller_inquiries")
-  .insert({
-    car_id: car.id,
-    seller_id: car.owner_id,
-    buyer_id: user.id,
-    inquiry_method: "whatsapp",
-  });
 
-if (error) {
-  console.error(error);
-  alert("Unable to process your request at this time. Please try again later.");
-  return;
-}
 
 const handleWhatsAppInquiry = async (car) => {
   try {
 
-    // get logged in buyer
     const { data: authData } = await supabase.auth.getUser();
 
-    const buyerId = authData?.user?.id || null;console.log("AUTH DATA:", authData);
-    console.log("BUYER ID:", buyerId);
-    console.log("CAR:", car);
+    if (!authData.user) {
+      alert("Please log in to contact the seller.");
+      return;
+    }
+
+    const buyerId = authData.user.id;
+    
+    const { error: sellerInquiryError } = await supabase
+  .from("seller_inquiries")
+  .insert([
+    {
+      car_id: car.id,
+      seller_id: car.owner_id,
+      buyer_id: buyerId,
+      inquiry_method: "whatsapp",
+    },
+  ]);
+
+if (sellerInquiryError) {
+  console.error("Seller inquiry error:", sellerInquiryError);
+  alert("Unable to process your request right now. Please try again.");
+  return;
+}
+
+const { error: telegramError } = await supabase.functions.invoke(
+  "send-telegram-notification",
+  {
+    body: {
+      buyer: buyerId,
+      seller: car.owner_id,
+      car: car.carName,
+      price: car.price,
+    },
+  }
+);
+
+if (telegramError) {
+  console.error("Telegram notification error:", telegramError);
+}
 
 
 
