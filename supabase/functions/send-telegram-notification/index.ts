@@ -1,103 +1,111 @@
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-Deno.serve(async (req) => {
+serve(async (req) => {
   try {
     const { buyer, seller, car, price } = await req.json();
 
-    // 🔐 Init Supabase Admin Client
     const supabase = createClient(
-      Deno.env.get("https://hcmkruxumytizendywdj.supabase.co")!,
-      Deno.env.get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjbWtydXh1bXl0aXplbmR5d2RqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTgxNDAwMSwiZXhwIjoyMDkxMzkwMDAxfQ.seziPLuhF4l-o_ZO5fMKO5zV8_ikb-jGswGo3aSq6ug")!
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // 👤 Fetch buyer username
-    const { data: buyerData, error: buyerError } = await supabase
+    // Fetch buyer username
+    const { data: buyerData } = await supabase
       .from("users")
       .select("username")
       .eq("id", buyer)
       .single();
 
-    if (buyerError) throw buyerError;
-
-    // 🏪 Fetch seller username
-    const { data: sellerData, error: sellerError } = await supabase
+    // Fetch seller username
+    const { data: sellerData } = await supabase
       .from("users")
       .select("username")
       .eq("id", seller)
       .single();
 
-    if (sellerError) throw sellerError;
+    const buyerName = buyerData?.username ?? "Unknown Buyer";
+    const sellerName = sellerData?.username ?? "Unknown Seller";
 
-    const buyerName = buyerData?.username || "Unknown Buyer";
-    const sellerName = sellerData?.username || "Unknown Seller";
+    const formatter = new Intl.NumberFormat("en-UG");
 
-    // 🕒 Time formatting (Uganda time)
-    const time = new Date().toLocaleTimeString("en-US", {
-      timeZone: "Africa/Kampala",
-      hour: "2-digit",
+    const now = new Date();
+
+    const time = now.toLocaleTimeString("en-UG", {
+      hour: "numeric",
       minute: "2-digit",
+      hour12: true,
+      timeZone: "Africa/Kampala",
     });
 
-    // 🚗 Telegram Message (your format)
     const message =
-`🚗 *CarFlix Uganda*
+`🚗 <b>CarFlix Uganda</b>
 
-🔔 *New Seller Inquiry*
+🔔 <b>New Seller Inquiry</b>
 
-👤 *Buyer:*
+👤 <b>Buyer:</b>
 ${buyerName}
 
-🏪 *Seller:*
+🏪 <b>Seller:</b>
 ${sellerName}
 
-🚘 *Vehicle:*
+🚘 <b>Vehicle:</b>
 ${car}
 
-💰 *Price:*
-UGX ${price}
+💰 <b>Price:</b>
+UGX ${formatter.format(price)}
 
-📱 *Method:*
+📱 <b>Method:</b>
 WhatsApp
 
-🕒 *Time:*
+🕒 <b>Time:</b>
 ${time}`;
 
-    // 🤖 Send to Telegram
-    const telegramToken = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
-    const chatId = Deno.env.get("TELEGRAM_CHAT_ID")!;
-
-    const telegramRes = await fetch(
-      `https://api.telegram.org/bot${telegramToken}/sendMessage`,
+    const response = await fetch(
+      `https://api.telegram.org/bot${Deno.env.get("TELEGRAM_BOT_TOKEN")}/sendMessage`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          chat_id: chatId,
+          chat_id: Deno.env.get("TELEGRAM_CHAT_ID"),
           text: message,
-          parse_mode: "Markdown",
+          parse_mode: "HTML",
         }),
       }
     );
 
-    const telegramData = await telegramRes.json();
+    const telegram = await response.json();
 
-    if (!telegramRes.ok) {
-      console.error("Telegram error:", telegramData);
-      throw new Error("Failed to send Telegram message");
+    if (!telegram.ok) {
+      throw new Error(JSON.stringify(telegram));
     }
 
     return new Response(
-      JSON.stringify({ success: true, telegramData }),
-      { headers: { "Content-Type": "application/json" } }
+      JSON.stringify({
+        success: true,
+      }),
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
     );
   } catch (err) {
-    console.error("Edge Function Error:", err);
+    console.error(err);
 
     return new Response(
-      JSON.stringify({ success: false, error: err.message }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({
+        success: false,
+        error: err.message,
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
     );
   }
 });

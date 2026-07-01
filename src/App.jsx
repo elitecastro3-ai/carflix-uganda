@@ -30,7 +30,7 @@ const CONDITIONS = ["Any Condition", "New", "Used", "Foreign Used", "Local Used"
 const WA_NUMBERS = [
   { label: "CAR-FLIX Line 1", number: "256708866140", display: "0708 866 140" },
   { label: "CAR-FLIX Line 2", number: "256787981089", display: "0787 981 089" },
-  { label: "CAR-FLIX Line 3", number: "256706018343", display: "0706 018 343" },
+  { label: "APP SUPPORT", number: "256708744769", display: "0708 447 769" },
 ];
 
 const formatPrice = (p) => "UGX " + p.toLocaleString();
@@ -1451,25 +1451,8 @@ const { error } = await supabase
 
 if (error) {
   console.error(error);
-  alert("Unable to process your request. Please try again.");
+  alert("Unable to process your request at this time. Please try again later.");
   return;
-}
-
-const { error: telegramError } =
-  await supabase.functions.invoke(
-    "send-telegram-notification",
-    {
-      body: {
-        buyer: user.id,
-        seller: car.owner_id,
-        car: car.carName,
-        price: car.price,
-      },
-    }
-  );
-
-if (telegramError) {
-  console.error(telegramError);
 }
 
 const handleWhatsAppInquiry = async (car) => {
