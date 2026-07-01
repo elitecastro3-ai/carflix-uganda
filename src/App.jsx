@@ -1297,6 +1297,15 @@ export default function CarFlixApp() {
   const [tab, setTab] = useState("home");
   const [cars, setCars] = useState([]);
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+if (!user) {
+  alert("Please log in to contact the seller.");
+  return;
+}
+
   const deleteCar = async (id) => {
     if (!window.confirm("Are you sure you want to delete this car?")) return;
     const { error } = await supabase.from("cars").delete().eq("id", id);
@@ -1430,6 +1439,39 @@ useEffect(() => {
 
   fetchInquiries();
 }, []);
+
+const { error } = await supabase
+  .from("seller_inquiries")
+  .insert({
+    car_id: car.id,
+    seller_id: car.owner_id,
+    buyer_id: user.id,
+    inquiry_method: "whatsapp",
+  });
+
+if (error) {
+  console.error(error);
+  alert("Unable to process your request. Please try again.");
+  return;
+}
+
+const { error: telegramError } =
+  await supabase.functions.invoke(
+    "send-telegram-notification",
+    {
+      body: {
+        buyer: user.id,
+        seller: car.owner_id,
+        car: car.carName,
+        price: car.price,
+      },
+    }
+  );
+
+if (telegramError) {
+  console.error(telegramError);
+}
+
 const handleWhatsAppInquiry = async (car) => {
   try {
 
