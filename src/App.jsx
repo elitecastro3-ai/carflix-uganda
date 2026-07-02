@@ -1477,7 +1477,10 @@ const { error: telegramError } = await supabase.functions.invoke(
 );
 
 if (telegramError) {
-  console.error("Telegram notification error:", telegramError);
+  console.error("Telegram invoke failed:", telegramError);
+  alert("Telegram Error: " + JSON.stringify(telegramError));
+} else {
+  console.log("Telegram function invoked successfully");
 }
 
 
