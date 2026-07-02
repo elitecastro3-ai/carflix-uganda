@@ -1437,60 +1437,61 @@ useEffect(() => {
 
 const handleWhatsAppInquiry = async (car) => {
   try {
+    console.log("STEP 1");
 
     const { data: authData } = await supabase.auth.getUser();
+    console.log("STEP 2", authData);
 
     if (!authData.user) {
       alert("Please log in to contact the seller.");
       return;
     }
 
+    console.log("STEP 3");
+
     const buyerId = authData.user.id;
-    
+
+    console.log("STEP 4");
+
     const { error: sellerInquiryError } = await supabase
-  .from("seller_inquiries")
-  .insert([
-    {
-      car_id: car.id,
-      seller_id: car.owner_id,
-      buyer_id: buyerId,
-      inquiry_method: "whatsapp",
-    },
-  ]);
+      .from("seller_inquiries")
+      .insert([
+        {
+          car_id: car.id,
+          seller_id: car.owner_id,
+          buyer_id: buyerId,
+          inquiry_method: "whatsapp",
+        },
+      ]);
 
-if (sellerInquiryError) {
-  console.error("Seller inquiry error:", sellerInquiryError);
-  alert("Unable to process your request right now. Please try again.");
-  return;
-}
+    console.log("STEP 5");
 
-console.log("Calling Telegram function...");
+    if (sellerInquiryError) {
+      console.error(sellerInquiryError);
+      return;
+    }
 
-const response = await supabase.functions.invoke(
-  "send-telegram-notification",
-  {
-    body: {
-      buyer: buyerId,
-      seller: car.owner_id,
-      car: car.carName,
-      price: car.price,
-    },
+    console.log("STEP 6 - BEFORE EDGE FUNCTION");
+
+    const response = await supabase.functions.invoke(
+      "send-telegram-notification",
+      {
+        body: {
+          buyer: buyerId,
+          seller: car.owner_id,
+          car: car.carName,
+          price: car.price,
+        },
+      }
+    );
+
+    console.log("STEP 7 - AFTER EDGE FUNCTION");
+    console.log(response);
+
+  } catch (err) {
+    console.error("BIG ERROR:", err);
   }
-);
-
-console.log("Invoke response:", response);
-
-const { data, error: telegramError } = response;
-
-console.log("Invoke data:", data);
-console.log("Invoke error:", telegramError);
-
-if (telegramError) {
-  console.error("Telegram invoke failed:", telegramError);
-  alert(telegramError.message ?? JSON.stringify(telegramError));
-} else {
-  console.log("Telegram function invoked successfully");
-}
+};
 
 
 
