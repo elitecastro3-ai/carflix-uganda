@@ -832,7 +832,7 @@ onLogin(profile);
 };
 
 // ── CAR DETAIL PAGE ────────────────────────────────────────────────────────────
-const CarDetail = ({ car, user, onBack, savedIds, onToggleSave }) => {
+const CarDetail = ({ car, user, onBack, savedIds, onToggleSave, onWhatsAppInquiry }) => {
   const [imgIdx, setImgIdx] = useState(0);
   const saved = savedIds.includes(car.id);
   const imgs = car.images && car.images.length > 0 ? car.images : null;
@@ -918,7 +918,7 @@ const CarDetail = ({ car, user, onBack, savedIds, onToggleSave }) => {
       {/* Action buttons */}
       <div style={{ padding: "0 16px 32px" }}>
         <button
-          onClick={() => handleWhatsAppInquiry(car)}
+          onClick={() => onWhatsAppInquiry(car)}
           style={{ ...S.primaryBtn, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: "#16A34A", borderRadius: 16, fontSize: 16 }}
         >
           <Icon name="whatsapp" size={22} color={WHITE} />
@@ -1626,7 +1626,7 @@ const handleWhatsAppInquiry = async (car) => {
   });
 
   if (selectedCar) return (
-    <CarDetail car={selectedCar} user={user} onBack={() => setSelectedCar(null)} savedIds={savedIds} onToggleSave={toggleSave} />
+    <CarDetail car={selectedCar} user={user} onBack={() => setSelectedCar(null)} savedIds={savedIds} onToggleSave={toggleSave} onWhatsAppInquiry={handleWhatsAppInquiry} />
   );
 
   // ── Car card (grid)
