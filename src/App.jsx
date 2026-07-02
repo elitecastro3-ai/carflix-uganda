@@ -1488,10 +1488,7 @@ const handleWhatsAppInquiry = async (car) => {
     console.log("STEP 7 - AFTER EDGE FUNCTION");
     console.log(response);
 
-  } catch (err) {
-    console.error("BIG ERROR:", err);
-  }
-};
+  
 
 
 
