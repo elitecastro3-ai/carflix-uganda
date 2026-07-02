@@ -918,12 +918,7 @@ const CarDetail = ({ car, user, onBack, savedIds, onToggleSave }) => {
       {/* Action buttons */}
       <div style={{ padding: "0 16px 32px" }}>
         <button
-          onClick={() => {
-            if (!car.owner_phone) { alert("Seller phone number not available"); return; }
-            const phone = car.owner_phone.startsWith("0") ? "256" + car.owner_phone.slice(1) : car.owner_phone;
-            const msg = `Hello 👋\n\nI'm interested in your *${car.carName}*\n\n💰 Price: UGX ${car.price}\n📍 Location: ${car.location}\n\n📸 View car:\n${car.images?.[0] || ""}`;
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
-          }}
+          onClick={() => handleWhatsAppInquiry(car)}
           style={{ ...S.primaryBtn, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: "#16A34A", borderRadius: 16, fontSize: 16 }}
         >
           <Icon name="whatsapp" size={22} color={WHITE} />
@@ -1511,13 +1506,24 @@ const handleWhatsAppInquiry = async (car) => {
     }
 
     // open whatsapp
-    const whatsappMessage =
-      `Hello, I'm interested in your ${car.carName}`;
+    const phone = car.owner_phone.startsWith("0")
+      ? "256" + car.owner_phone.slice(1)
+      : car.owner_phone;
 
-    const whatsappUrl =
-      `https://wa.me/${car.phone}?text=${encodeURIComponent(whatsappMessage)}`;
+    const msg = `Hello 👋
 
-    window.open(whatsappUrl, "_blank");
+    I'm interested in your *${car.carName}*
+
+    💰 Price: UGX ${car.price}
+    📍 Location: ${car.location}
+
+    📸 View car:
+    ${car.images?.[0] || ""}`;
+
+    window.open(
+      `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`,
+      "_blank"
+    );
 
   } catch (err) {
     console.log(err);
