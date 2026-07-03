@@ -1406,6 +1406,8 @@ export default function CarFlixApp() {
 
   const [loadingCars, setLoadingCars] = useState(false);
 
+  const loaderRef = useRef(null);
+
   
 
   const deleteCar = async (id) => {
@@ -1649,6 +1651,8 @@ const handleWhatsAppInquiry = async (car) => {
 
   console.log("fetchCars called", pageNumber);
 
+  if (loadingCars) return;
+
   setLoadingCars(true);
 
   const from = pageNumber * PAGE_SIZE;
@@ -1705,6 +1709,33 @@ useEffect(() => {
 }, [page]);
 
 useEffect(() => {
+  const observer = new IntersectionObserver(
+    (entries) => {
+      if (
+        entries[0].isIntersecting &&
+        hasMoreCars &&
+        !loadingCars
+      ) {
+        setPage((prev) => prev + 1);
+      }
+    },
+    {
+      threshold: 0.2,
+    }
+  );
+
+  if (loaderRef.current) {
+    observer.observe(loaderRef.current);
+  }
+
+  return () => {
+    if (loaderRef.current) {
+      observer.unobserve(loaderRef.current);
+    }
+  };
+}, [hasMoreCars, loadingCars]);
+
+useEffect(() => {
   fetchFeaturedCars();
 }, []);
 
@@ -1714,6 +1745,8 @@ useEffect(() => {
   setCars([]);
   setHasMoreCars(true);
   setPage(0);
+
+  fetchCars(0);
 };
 
   const toggleSave = async (carId) => {
@@ -2108,6 +2141,21 @@ I'm interested — please keep me posted!`;
                           {filtered.map(car => <CarCard key={car.id} car={car} />)}
                         </div>
                       )}
+                      <div
+                        ref={loaderRef}
+                        style={{
+                          height: 40,
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                        }}
+                      >
+                        {loadingCars && (
+                          <span style={{ color: "#666" }}>
+                            Loading more cars...
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* FAB — car icon + pill + pulse */}
