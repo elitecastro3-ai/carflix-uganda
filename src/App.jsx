@@ -1402,7 +1402,7 @@ export default function CarFlixApp() {
 
   const [hasMoreCars, setHasMoreCars] = useState(true);
 
-  const [loadingMoreCars, setLoadingMoreCars] = useState(false);
+  const [loadingCars, setLoadingCars] = useState(false);
 
   
 
@@ -1642,7 +1642,7 @@ const handleWhatsAppInquiry = async (car) => {
   }
 };
 
-
+  console.log("fetchCars called", pageNumber);
   const fetchCars = async (pageNumber = 0) => {
   setLoadingCars(true);
 
@@ -1654,6 +1654,10 @@ const handleWhatsAppInquiry = async (car) => {
   .select("*")
   .order("created_at", { ascending: false })
   .range(from, to);
+
+  console.log("Supabase returned:", data);
+  console.log("Supabase error:", error);
+
 
   if (error) {
     console.error(error);
