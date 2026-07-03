@@ -4,6 +4,15 @@ import AdminDashboard from "./AdminDashboard";
 import { supabase } from "./supabase";
 import { Turnstile } from "@marsidev/react-turnstile";
 import imageCompression from "browser-image-compression";
+import {
+  CarGridSkeleton,
+  FeaturedSkeleton,
+  ImportGridSkeleton,
+  CarDetailSkeleton,
+  TextSkeleton,
+  PillSkeleton,
+  ButtonSkeleton
+} from "./Skeletons";
 // ── MOCK DATA ──────────────────────────────────────────────────────────────────
 const MOCK_CARS = [
   { id: "1", carName: "Noah", brand: "Toyota", price: 45000000, location: "Nakawa", condition: "Used", description: "Well maintained Toyota Noah, 7-seater, fuel efficient. Excellent condition for family use.", images: ["https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=400&q=80"], ownerId: "u1", badge: "New", featured: false },
@@ -2113,7 +2122,13 @@ I'm interested — please keep me posted!`;
                             WebkitOverflowScrolling: "touch",
                           }}
                         >
-                          {featuredCars.map(car => <FeaturedCard key={car.id} car={car} />)}
+                        {loadingCars && cars.length === 0 ? (
+                          <FeaturedSkeleton count={4} />
+                        ) : (
+                          featuredCars.map(car => (
+                            <FeaturedCard key={car.id} car={car} />
+                          ))
+                        )}  
                         </div>
                         {/* Divider */}
                         <div style={{ height: 1, background: BORDER, margin: "0 16px" }} />
@@ -2138,7 +2153,13 @@ I'm interested — please keep me posted!`;
                         </div>
                       ) : (
                         <div style={S.grid}>
-                          {filtered.map(car => <CarCard key={car.id} car={car} />)}
+                      {loadingCars && cars.length === 0 ? (     
+                        <CarGridSkeleton count={8} />
+                      ) : (
+                        filtered.map(car => (
+                          <CarCard key={car.id} car={car} />
+                        ))
+                      )}
                         </div>
                       )}
                       <div
@@ -2487,7 +2508,13 @@ I'm interested — please keep me posted!`;
                       </div>
                     ) : (
                       <>
-                        {filteredImports.map(car => <ImportCard key={car.id} car={car} />)}
+                    {loadingImports && imports.length === 0 ? (
+                      <ImportGridSkeleton count={6} />
+                    ) : (
+                      filteredImports.map(car => (
+                        <ImportCard key={car.id} car={car} />
+                      ))
+                    )}
                       </>
                     )}
                   </div>
