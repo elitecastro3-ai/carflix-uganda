@@ -1643,57 +1643,50 @@ const handleWhatsAppInquiry = async (car) => {
 };
 
 
-  useEffect(() => {
-  const fetchCars = async () => {
+  const fetchCars = async (pageNumber = 0) => {
+  setLoadingCars(true);
 
-    if (loadingCars || !hasMoreCars) return;
+  const from = pageNumber * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
 
-    setLoadingCars(true);
+  const { data, error } = await supabase
+  .from("cars")
+  .select("*")
+  .order("created_at", { ascending: false })
+  .range(from, to);
 
-    const from = page * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
-
-    const { data, error } = await supabase
-      .from("cars")
-      .select("*")
-      .range(from, to);
-
-    if (error) {
-      console.error(error);
-      setLoadingCars(false);
-      return;
-    }
-
-    console.log("Loaded cars:", data);
-
-    setCars(prev => [...prev, ...(data || [])]);
-
-    if (!data || data.length < PAGE_SIZE) {
-      setHasMoreCars(false);
-    }
-
+  if (error) {
+    console.error(error);
     setLoadingCars(false);
-  };
+    return;
+  }
 
-  fetchCars();
+  console.log("Loaded cars:", data);
 
-}, [page]);
+  if (pageNumber === 0) {
+    setCars(data || []);
+  } else {
+    setCars(prev => [...prev, ...(data || [])]);
+  }
+
+  if (!data || data.length < PAGE_SIZE) {
+    setHasMoreCars(false);
+  }
+
+  setLoadingCars(false);
+};
 
 useEffect(() => {
-  setCars([]);
-  setPage(0);
-  setHasMoreCars(true);
-}, []);
+  fetchCars(page);
+}, [page]);
 
   const openWa = (car = null) => { setWaCarContext(car); setShowWaPicker(true); };
 
   const refresh = async () => {
-    const { data, error } = await supabase.from("cars").select("*");
-    console.log("FETCH RESULT:", data);
-    console.log("FETCH ERROR:", error);
-    if (error) alert("Fetch error: " + error.message);
-    setCars(data || []);
-  };
+  setCars([]);
+  setHasMoreCars(true);
+  setPage(0);
+};
 
   const toggleSave = async (carId) => {
   if (!user) {
