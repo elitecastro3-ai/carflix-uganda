@@ -1779,7 +1779,7 @@ useEffect(() => {
     return true;
   });
 
-  const featuredCars = cars.filter(car => car.featured);
+  //const featuredCars = cars.filter(car => car.featured);
   const savedCars = cars.filter(c => savedIds.includes(c.id));
   const myCars = user ? cars.filter(c => c.owner_id === user.id) : [];
   const myImports = user ? imports.filter(c => c.owner_id === user.id) : []; // new: mirrors myCars, for the My Imports segment
