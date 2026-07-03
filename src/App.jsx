@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AdminDashboard from "./AdminDashboard";
 import { supabase } from "./supabase";
 import { Turnstile } from "@marsidev/react-turnstile";
+import imageCompression from "browser-image-compression";
 // ── MOCK DATA ──────────────────────────────────────────────────────────────────
 const MOCK_CARS = [
   { id: "1", carName: "Noah", brand: "Toyota", price: 45000000, location: "Nakawa", condition: "Used", description: "Well maintained Toyota Noah, 7-seater, fuel efficient. Excellent condition for family use.", images: ["https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=400&q=80"], ownerId: "u1", badge: "New", featured: false },
@@ -944,22 +945,73 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const handleImageUpload = async (e) => {
-    const files = Array.from(e.target.files);
-    if (form.images.length + files.length > 7) return setErr("Maximum 7 images allowed");
-    setUploading(true);
-    let uploadedUrls = [];
-    for (let file of files) {
-      const fileName = `${Date.now()}-${file.name}`;
-      const { error } = await supabase.storage.from("cars").upload(fileName, file);
-      if (error) { setUploading(false); return setErr("Upload failed"); }
-      const { data } = supabase.storage.from("cars").getPublicUrl(fileName);
+  const files = Array.from(e.target.files);
+
+  if (form.images.length + files.length > 7) {
+    return setErr("Maximum 7 images allowed");
+  }
+
+  setUploading(true);
+
+  let uploadedUrls = [];
+
+  const options = {
+    maxSizeMB: 0.35,          // Maximum 350KB
+    maxWidthOrHeight: 1600,   // Resize if larger than 1600px
+    useWebWorker: true,
+    initialQuality: 0.8,
+  };
+
+  try {
+    for (const file of files) {
+
+      // Compress image
+      const compressedFile = await imageCompression(file, options);
+
+      console.log(
+        "Original:",
+        (file.size / 1024 / 1024).toFixed(2),
+        "MB"
+      );
+
+      console.log(
+        "Compressed:",
+        (compressedFile.size / 1024).toFixed(0),
+        "KB"
+      );
+
+      const fileName = `${Date.now()}-${compressedFile.name}`;
+
+      const { error } = await supabase.storage
+        .from("cars")
+        .upload(fileName, compressedFile);
+
+      if (error) {
+        setUploading(false);
+        return setErr("Upload failed");
+      }
+
+      const { data } = supabase.storage
+        .from("cars")
+        .getPublicUrl(fileName);
+
       uploadedUrls.push(data.publicUrl);
     }
-    console.log("Uploaded URLs:", uploadedUrls);
-    setForm((prev) => ({ ...prev, images: [...prev.images, ...uploadedUrls] }));
+
+    setForm((prev) => ({
+      ...prev,
+      images: [...prev.images, ...uploadedUrls],
+    }));
+
     e.target.value = "";
-    setUploading(false);
-  };
+
+  } catch (err) {
+    console.error(err);
+    setErr("Image compression failed.");
+  }
+
+  setUploading(false);
+};
 
   const removeImg = (i) => setForm((f) => ({ ...f, images: f.images.filter((_, idx) => idx !== i) }));
 
@@ -1093,21 +1145,73 @@ console.log("PROFILE:", profile);
 }, []);
 
   const handleImageUpload = async (e) => {
-    const files = Array.from(e.target.files);
-    if (form.images.length + files.length > 7) return setErr("Maximum 7 images allowed");
-    setUploading(true);
-    let uploadedUrls = [];
-    for (let file of files) {
-      const fileName = `${Date.now()}-${file.name}`;
-      const { error } = await supabase.storage.from("imports").upload(fileName, file);
-      if (error) { setUploading(false); return setErr("Upload failed"); }
-      const { data } = supabase.storage.from("imports").getPublicUrl(fileName);
+  const files = Array.from(e.target.files);
+
+  if (form.images.length + files.length > 7) {
+    return setErr("Maximum 7 images allowed");
+  }
+
+  setUploading(true);
+
+  let uploadedUrls = [];
+
+  const options = {
+    maxSizeMB: 0.35,          // Compress to around 350KB
+    maxWidthOrHeight: 1600,   // Resize large images
+    useWebWorker: true,
+    initialQuality: 0.8,
+  };
+
+  try {
+    for (const file of files) {
+
+      // Compress image
+      const compressedFile = await imageCompression(file, options);
+
+      console.log(
+        "Original:",
+        (file.size / 1024 / 1024).toFixed(2),
+        "MB"
+      );
+
+      console.log(
+        "Compressed:",
+        (compressedFile.size / 1024).toFixed(0),
+        "KB"
+      );
+
+      const fileName = `${Date.now()}-${compressedFile.name}`;
+
+      const { error } = await supabase.storage
+        .from("imports")
+        .upload(fileName, compressedFile);
+
+      if (error) {
+        setUploading(false);
+        return setErr("Upload failed");
+      }
+
+      const { data } = supabase.storage
+        .from("imports")
+        .getPublicUrl(fileName);
+
       uploadedUrls.push(data.publicUrl);
     }
-    setForm((prev) => ({ ...prev, images: [...prev.images, ...uploadedUrls] }));
+
+    setForm((prev) => ({
+      ...prev,
+      images: [...prev.images, ...uploadedUrls],
+    }));
+
     e.target.value = "";
-    setUploading(false);
-  };
+
+  } catch (err) {
+    console.error(err);
+    setErr("Image compression failed.");
+  }
+
+  setUploading(false);
+};
 
   const removeImg = (i) => setForm((f) => ({ ...f, images: f.images.filter((_, idx) => idx !== i) }));
 
@@ -1291,6 +1395,14 @@ export default function CarFlixApp() {
   const [showAuth, setShowAuth] = useState(false);
   const [tab, setTab] = useState("home");
   const [cars, setCars] = useState([]);
+
+  const PAGE_SIZE = 20;
+
+  const [page, setPage] = useState(0);
+
+  const [hasMoreCars, setHasMoreCars] = useState(true);
+
+  const [loadingMoreCars, setLoadingMoreCars] = useState(false);
 
   
 
@@ -1532,13 +1644,46 @@ const handleWhatsAppInquiry = async (car) => {
 
 
   useEffect(() => {
-    const fetchCars = async () => {
-      const { data } = await supabase.from("cars").select("*");
-      console.log("RAW CARS FROM DB:", data);
-      setCars(data || []);
-    };
-    fetchCars();
-  }, []);
+  const fetchCars = async () => {
+
+    if (loadingCars || !hasMoreCars) return;
+
+    setLoadingCars(true);
+
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
+    const { data, error } = await supabase
+      .from("cars")
+      .select("*")
+      .range(from, to);
+
+    if (error) {
+      console.error(error);
+      setLoadingCars(false);
+      return;
+    }
+
+    console.log("Loaded cars:", data);
+
+    setCars(prev => [...prev, ...(data || [])]);
+
+    if (!data || data.length < PAGE_SIZE) {
+      setHasMoreCars(false);
+    }
+
+    setLoadingCars(false);
+  };
+
+  fetchCars();
+
+}, [page]);
+
+useEffect(() => {
+  setCars([]);
+  setPage(0);
+  setHasMoreCars(true);
+}, []);
 
   const openWa = (car = null) => { setWaCarContext(car); setShowWaPicker(true); };
 

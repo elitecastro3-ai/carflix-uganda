@@ -1,7 +1,20 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
 serve(async (req) => {
+  // Handle CORS preflight request
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      headers: corsHeaders,
+    });
+  }
+
   try {
     const { buyer, seller, car, price } = await req.json();
 
@@ -10,14 +23,14 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Fetch buyer username
+    // Buyer
     const { data: buyerData } = await supabase
       .from("users")
       .select("username")
       .eq("id", buyer)
       .single();
 
-    // Fetch seller username
+    // Seller
     const { data: sellerData } = await supabase
       .from("users")
       .select("username")
@@ -29,17 +42,14 @@ serve(async (req) => {
 
     const formatter = new Intl.NumberFormat("en-UG");
 
-    const now = new Date();
-
-    const time = now.toLocaleTimeString("en-UG", {
+    const time = new Date().toLocaleTimeString("en-UG", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
       timeZone: "Africa/Kampala",
     });
 
-    const message =
-`🚗 <b>CarFlix Uganda</b>
+    const message = `🚗 <b>CarFlix Uganda</b>
 
 🔔 <b>New Seller Inquiry</b>
 
@@ -61,8 +71,10 @@ WhatsApp
 🕒 <b>Time:</b>
 ${time}`;
 
-    const response = await fetch(
-      `https://api.telegram.org/bot${Deno.env.get("TELEGRAM_BOT_TOKEN")}/sendMessage`,
+    const telegramResponse = await fetch(
+      `https://api.telegram.org/bot${Deno.env.get(
+        "TELEGRAM_BOT_TOKEN"
+      )}/sendMessage`,
       {
         method: "POST",
         headers: {
@@ -76,7 +88,7 @@ ${time}`;
       }
     );
 
-    const telegram = await response.json();
+    const telegram = await telegramResponse.json();
 
     if (!telegram.ok) {
       throw new Error(JSON.stringify(telegram));
@@ -88,6 +100,7 @@ ${time}`;
       }),
       {
         headers: {
+          ...corsHeaders,
           "Content-Type": "application/json",
         },
       }
@@ -98,11 +111,12 @@ ${time}`;
     return new Response(
       JSON.stringify({
         success: false,
-        error: err.message,
+        error: err instanceof Error ? err.message : String(err),
       }),
       {
         status: 500,
         headers: {
+          ...corsHeaders,
           "Content-Type": "application/json",
         },
       }
