@@ -1642,8 +1642,11 @@ const handleWhatsAppInquiry = async (car) => {
   }
 };
 
-  console.log("fetchCars called", pageNumber);
+  
   const fetchCars = async (pageNumber = 0) => {
+
+  console.log("fetchCars called", pageNumber);
+
   setLoadingCars(true);
 
   const from = pageNumber * PAGE_SIZE;
