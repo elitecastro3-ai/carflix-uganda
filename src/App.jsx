@@ -1396,6 +1396,8 @@ export default function CarFlixApp() {
   const [tab, setTab] = useState("home");
   const [cars, setCars] = useState([]);
 
+  const [featuredCars, setFeaturedCars] = useState([]);
+
   const PAGE_SIZE = 20;
 
   const [page, setPage] = useState(0);
@@ -1683,9 +1685,28 @@ const handleWhatsAppInquiry = async (car) => {
   setLoadingCars(false);
 };
 
+const fetchFeaturedCars = async () => {
+  const { data, error } = await supabase
+    .from("cars")
+    .select("*")
+    .eq("featured", true)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  setFeaturedCars(data || []);
+};
+
 useEffect(() => {
   fetchCars(page);
 }, [page]);
+
+useEffect(() => {
+  fetchFeaturedCars();
+}, []);
 
   const openWa = (car = null) => { setWaCarContext(car); setShowWaPicker(true); };
 
