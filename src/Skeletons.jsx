@@ -79,6 +79,24 @@ style={{marginTop:20}}
 </div>
 );
 
+export const CarGridSkeleton = ({ count = 8 }) => (
+  <>
+    <SkeletonStyle />
+
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+        gap: 20,
+      }}
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        <CarCardSkeleton key={i} />
+      ))}
+    </div>
+  </>
+);
+
 export const FeaturedCardSkeleton = () => (
 <div
 style={{
@@ -154,6 +172,24 @@ style={{marginTop:18}}
 </div>
 
 </div>
+);
+
+export const ImportGridSkeleton = ({ count = 8 }) => (
+  <>
+    <SkeletonStyle />
+
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+        gap: 20,
+      }}
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        <ImportCardSkeleton key={i} />
+      ))}
+    </div>
+  </>
 );
 
 export const CarDetailSkeleton = () => (
