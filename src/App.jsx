@@ -1417,6 +1417,8 @@ export default function CarFlixApp() {
 
   const loaderRef = useRef(null);
 
+  const [loadingImports, setLoadingImports] = useState(false);
+
   
 
   const deleteCar = async (id) => {
@@ -1464,6 +1466,8 @@ export default function CarFlixApp() {
   const [showPostImport, setShowPostImport] = useState(false); // new: "Post an import" modal
   const [showFabMenu, setShowFabMenu] = useState(false); // new: FAB flyout (choose Uganda car vs import)
   const fetchImports = async () => {
+  setLoadingImports(true);
+
   const { data, error } = await supabase
     .from("imports")
     .select("*, users(phone)")
@@ -1471,20 +1475,23 @@ export default function CarFlixApp() {
 
   if (error) {
     console.error("IMPORT FETCH ERROR:", error);
+    setLoadingImports(false);
     return;
   }
 
-  // Normalise DB column names to UI field names and attach owner phone
   const normalised = (data || []).map(row => ({
     ...row,
-    carName:         row.car_name         || row.carName         || "",
-    originCountry:   row.importing_from   || row.originCountry   || "",
+    carName: row.car_name || row.carName || "",
+    originCountry: row.importing_from || row.originCountry || "",
     expectedArrival: row.expected_arrival || row.expectedArrival || "",
-    owner_phone:     row.users?.phone     || row.owner_phone     || null,
+    owner_phone: row.users?.phone || row.owner_phone || null,
   }));
 
   console.log("IMPORTS FROM DB (normalised):", normalised);
+
   setImports(normalised);
+
+  setLoadingImports(false);
 };
   useEffect(() => {
   fetchImports();
