@@ -1742,28 +1742,28 @@ useEffect(() => {
   if (!loaderRef.current) return;
 
   const observer = new IntersectionObserver(
-    (entries) => {
-      const entry = entries[0];
+  (entries) => {
+    const entry = entries[0];
 
-      if (
-        entry.isIntersecting &&
-        hasMoreCars &&
-        !loadingCars &&
-        !observerTriggered.current
-      ) {
-        observerTriggered.current = true;
-        setPage((prev) => prev + 1);
-      }
-
-      if (!entry.isIntersecting) {
-        observerTriggered.current = false;
-      }
-    },
-    {
-      threshold: 1.0,
-      rootMargin: "300px",
+    if (
+      entry.isIntersecting &&
+      hasMoreCars &&
+      !loadingCars &&
+      !observerTriggered.current
+    ) {
+      observerTriggered.current = true;
+      setPage(prev => prev + 1);
     }
-  );
+
+    if (!entry.isIntersecting) {
+      observerTriggered.current = false;
+    }
+  },
+  {
+    threshold: 0.1,
+    rootMargin: "0px",
+  }
+);
 
   observer.observe(loaderRef.current);
 
@@ -1781,7 +1781,6 @@ useEffect(() => {
   setHasMoreCars(true);
   setPage(0);
 
-  fetchCars(0);
 };
 
   const toggleSave = async (carId) => {
@@ -1835,6 +1834,12 @@ useEffect(() => {
   const acceptTerms = () => { setShowTerms(false); };
 
   const filtered = cars.filter(c => {
+  console.log("Total cars fetched:", cars.length);
+  console.log("Filtered cars:", filtered.length);
+  console.log(
+    "Featured cars:",
+    cars.filter(c => c.featured).length
+  );
     const q = search.toLowerCase();
     if (q && !c.carName.toLowerCase().includes(q) && !c.brand.toLowerCase().includes(q) && !c.location.toLowerCase().includes(q) && !String(c.price).includes(q)) return false;
     const b = brandFilter !== "All" ? brandFilter : filters.brand !== "All" ? filters.brand : null;
@@ -2188,6 +2193,7 @@ I'm interested — please keep me posted!`;
                       )}
                         </div>
                       )}
+                      {hasMoreCars && (
                       <div
                         ref={loaderRef}
                         style={{
@@ -2203,6 +2209,7 @@ I'm interested — please keep me posted!`;
                           </span>
                         )}
                       </div>
+                    )}
                     </div>
 
                     {/* FAB — car icon + pill + pulse */}
