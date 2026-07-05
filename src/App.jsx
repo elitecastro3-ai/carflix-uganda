@@ -1417,6 +1417,8 @@ export default function CarFlixApp() {
 
   const loaderRef = useRef(null);
 
+  const isFetchingRef = useRef(false);
+
   const observerTriggered = useRef(false);
 
   const [loadingImports, setLoadingImports] = useState(false);
@@ -1669,8 +1671,9 @@ const handleWhatsAppInquiry = async (car) => {
 
   console.log("fetchCars called", pageNumber);
 
-  if (loadingCars) return;
+  if (isFetchingRef.current) return;
 
+  isFetchingRef.current = true;
   setLoadingCars(true);
 
   const from = pageNumber * PAGE_SIZE;
@@ -1688,6 +1691,7 @@ const handleWhatsAppInquiry = async (car) => {
 
   if (error) {
     console.error(error);
+    isFetchingRef.current = false;
     setLoadingCars(false);
     return;
   }
@@ -1711,7 +1715,7 @@ const handleWhatsAppInquiry = async (car) => {
   if (!data || data.length < PAGE_SIZE) {
     setHasMoreCars(false);
   }
-
+  isFetchingRef.current = false;
   setLoadingCars(false);
 };
 
