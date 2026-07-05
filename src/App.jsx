@@ -1417,6 +1417,8 @@ export default function CarFlixApp() {
 
   const loaderRef = useRef(null);
 
+  const observerTriggered = useRef(false);
+
   const [loadingImports, setLoadingImports] = useState(false);
 
   
@@ -1698,6 +1700,14 @@ const handleWhatsAppInquiry = async (car) => {
     setCars(prev => [...prev, ...(data || [])]);
   }
 
+  console.log("Returned:", data.length);
+  console.log("Current page:", pageNumber);
+
+  if (data.length < PAGE_SIZE) {
+    console.log("NO MORE PAGES");
+    setHasMoreCars(false);
+  }
+
   if (!data || data.length < PAGE_SIZE) {
     setHasMoreCars(false);
   }
@@ -1725,30 +1735,35 @@ useEffect(() => {
 }, [page]);
 
 useEffect(() => {
+  if (!loaderRef.current) return;
+
   const observer = new IntersectionObserver(
     (entries) => {
+      const entry = entries[0];
+
       if (
-        entries[0].isIntersecting &&
+        entry.isIntersecting &&
         hasMoreCars &&
-        !loadingCars
+        !loadingCars &&
+        !observerTriggered.current
       ) {
+        observerTriggered.current = true;
         setPage((prev) => prev + 1);
+      }
+
+      if (!entry.isIntersecting) {
+        observerTriggered.current = false;
       }
     },
     {
-      threshold: 0.2,
+      threshold: 1.0,
+      rootMargin: "300px",
     }
   );
 
-  if (loaderRef.current) {
-    observer.observe(loaderRef.current);
-  }
+  observer.observe(loaderRef.current);
 
-  return () => {
-    if (loaderRef.current) {
-      observer.unobserve(loaderRef.current);
-    }
-  };
+  return () => observer.disconnect();
 }, [hasMoreCars, loadingCars]);
 
 useEffect(() => {
