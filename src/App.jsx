@@ -1851,6 +1851,10 @@ useEffect(() => {
     return true;
   });
 
+  console.log("Cars state:", cars.length);
+  console.log("Filtered:", filtered.length);
+  console.log("Featured:", featuredCars.length);
+
   console.log("Total cars fetched:", cars.length);
   console.log("Filtered cars:", filtered.length);
   console.log(
@@ -2196,9 +2200,7 @@ I'm interested — please keep me posted!`;
                         filtered.map(car => (
                           <CarCard key={car.id} car={car} />
                         ))
-                        console.log("Cars state:", cars.length);
-                        console.log("Filtered:", filtered.length);
-                        console.log("Featured:", featuredCars.length);
+                        
                       )}
                         </div>
                       )}
