@@ -1388,7 +1388,7 @@ export default function CarFlixApp() {
 
   const PAGE_SIZE = 20;
 
-  const [page, setPage] = useState(0);
+  const pageRef = useRef(0);
 
   const [hasMoreCars, setHasMoreCars] = useState(true);
 
@@ -1399,6 +1399,8 @@ export default function CarFlixApp() {
   
 
   const [loadingImports, setLoadingImports] = useState(false);
+
+  const isFetchingRef = useRef(false);
 
   
 
@@ -1670,8 +1672,9 @@ const handleWhatsAppInquiry = async (car) => {
 
   
   const fetchCars = async (pageNumber) => {
-  if (loadingCars || !hasMoreCars) return;
+  if (isFetchingRef.current || !hasMoreCars) return;
 
+  isFetchingRef.current = true;
   setLoadingCars(true);
 
   const from = pageNumber * PAGE_SIZE;
@@ -1698,8 +1701,10 @@ const handleWhatsAppInquiry = async (car) => {
   if (pageNumber === 0) {
     setCars(data);
   } else {
-    setCars(prev => [...prev, ...data]);
+    fetchCars(pageRef.current + 1);
   }
+
+  pageRef.current = pageNumber;
 
   console.log(
     `Loaded page ${pageNumber}: ${data.length} cars`
@@ -1710,6 +1715,9 @@ const handleWhatsAppInquiry = async (car) => {
     setHasMoreCars(false);
   }
 
+  setLoadingCars(false);
+
+  isFetchingRef.current = false;
   setLoadingCars(false);
 };
 const fetchFeaturedCars = async () => {
@@ -1728,11 +1736,15 @@ const fetchFeaturedCars = async () => {
 };
 
 useEffect(() => {
-  fetchCars(page);
-}, [page]);
+    fetchCars(0);
+}, []);
+
+
 
 useEffect(() => {
   if (!loaderRef.current) return;
+
+  if (cars.length === 0) return;
 
   const observer = new IntersectionObserver(
     (entries) => {
@@ -1745,7 +1757,7 @@ useEffect(() => {
       ) {
         console.log("Loading next page:", page + 1);
 
-        setPage(prev => prev + 1);
+        fetchCars(pageRef.current + 1);
       }
     },
     {
@@ -1757,7 +1769,7 @@ useEffect(() => {
   observer.observe(loaderRef.current);
 
   return () => observer.disconnect();
-}, [loadingCars, hasMoreCars]);
+}, [cars.length, hasMoreCars]
 useEffect(() => {
   fetchFeaturedCars();
 }, []);
