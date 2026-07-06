@@ -1671,7 +1671,7 @@ const handleWhatsAppInquiry = async (car) => {
 };
 
   
-  const fetchCars = async (pageNumber) => {
+  const fetchCars = async (pageNumber = 0) => {
   if (isFetchingRef.current || !hasMoreCars) return;
 
   isFetchingRef.current = true;
@@ -1680,46 +1680,42 @@ const handleWhatsAppInquiry = async (car) => {
   const from = pageNumber * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  const result = await supabase
-  .from("cars")
-  .select("*", { count: "exact" })
-  .order("created_at", { ascending: false })
-  .range(from, to);
+  try {
+    const { data, error, count } = await supabase
+      .from("cars")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
-  
+    console.log("Total rows in database:", count);
 
-  const { data, error, count } = result;
+    if (error) {
+      console.error(error);
+      return;
+    }
 
-  console.log("Total rows:", count);
+    if (pageNumber === 0) {
+      setCars(data || []);
+    } else {
+      setCars(prev => [...prev, ...(data || [])]);
+    }
 
-  if (error) {
-    console.error(error);
+    pageRef.current = pageNumber;
+
+    console.log(`Loaded page ${pageNumber}: ${data.length} cars`);
+
+    if (!data || data.length < PAGE_SIZE) {
+      console.log("Reached last page.");
+      setHasMoreCars(false);
+    }
+  } catch (err) {
+    console.error("fetchCars failed:", err);
+  } finally {
+    isFetchingRef.current = false;
     setLoadingCars(false);
-    return;
   }
-
-  if (pageNumber === 0) {
-    setCars(data);
-  } else {
-    fetchCars(pageRef.current + 1);
-  }
-
-  pageRef.current = pageNumber;
-
-  console.log(
-    `Loaded page ${pageNumber}: ${data.length} cars`
-  );
-
-  if (data.length < PAGE_SIZE) {
-    console.log("Reached last page.");
-    setHasMoreCars(false);
-  }
-
-  setLoadingCars(false);
-
-  isFetchingRef.current = false;
-  setLoadingCars(false);
 };
+
 const fetchFeaturedCars = async () => {
   const { data, error } = await supabase
     .from("cars")
@@ -1735,28 +1731,32 @@ const fetchFeaturedCars = async () => {
   setFeaturedCars(data || []);
 };
 
+// Initial load
 useEffect(() => {
-    fetchCars(0);
+  fetchCars(0);
 }, []);
 
+// Featured cars
+useEffect(() => {
+  fetchFeaturedCars();
+}, []);
 
-
+// Infinite scroll
 useEffect(() => {
   if (!loaderRef.current) return;
-
   if (cars.length === 0) return;
 
   const observer = new IntersectionObserver(
-    (entries) => {
+    entries => {
       const first = entries[0];
 
       if (
         first.isIntersecting &&
         !loadingCars &&
-        hasMoreCars
+        hasMoreCars &&
+        !isFetchingRef.current
       ) {
-        console.log("Loading next page:", page + 1);
-
+        console.log("Loading next page:", pageRef.current + 1);
         fetchCars(pageRef.current + 1);
       }
     },
@@ -1769,27 +1769,24 @@ useEffect(() => {
   observer.observe(loaderRef.current);
 
   return () => observer.disconnect();
-}, [cars.length, hasMoreCars]
-useEffect(() => {
-  fetchFeaturedCars();
-}, []);
+}, [cars.length, loadingCars, hasMoreCars]);
 
+// Debug logs
 useEffect(() => {
   console.log({
-    page,
+    page: pageRef.current,
     cars: cars.length,
     featured: featuredCars.length,
     loadingCars,
     hasMoreCars,
   });
-}, [page, cars, featuredCars, loadingCars, hasMoreCars]);
+}, [cars, featuredCars, loadingCars, hasMoreCars]);
 
-  const openWa = (car = null) => { setWaCarContext(car); setShowWaPicker(true); };
-
-  const refresh = () => {
+const refresh = () => {
+  pageRef.current = 0;
   setCars([]);
-  setPage(0);
   setHasMoreCars(true);
+  fetchCars(0);
 };
 
   const toggleSave = async (carId) => {
