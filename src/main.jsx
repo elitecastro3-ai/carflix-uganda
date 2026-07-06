@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
-import TestSupabase from "./TestSupabase";
+import "./index.css";
+import App from "./App.jsx";
 
 createRoot(document.getElementById("root")).render(
-  <TestSupabase />
+  <App />
 );

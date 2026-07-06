@@ -1672,53 +1672,46 @@ const handleWhatsAppInquiry = async (car) => {
 
   
   const fetchCars = async (pageNumber = 0) => {
-  console.log("========== fetchCars ==========");
-  console.log("Page:", pageNumber);
-  console.log("Before guard:", isFetchingRef.current);
-
-  if (isFetchingRef.current) {
-    console.log("EXIT: already fetching");
-    return;
-  }
-
-  isFetchingRef.current = true;
-  console.log("Fetching flag set to TRUE");
-
-  setLoadingCars(true);
+  console.log("FETCH START");
 
   const from = pageNumber * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  console.log("Before Supabase query");
-
   try {
-    const { data, error } = await supabase
+    console.log("Before query");
+
+    const result = await supabase
       .from("cars")
       .select("*")
       .order("created_at", { ascending: false })
       .range(from, to);
 
-    console.log("After Supabase query");
-    console.log("Data:", data);
-    console.log("Error:", error);
+    console.log("After query");
 
-    if (error) throw error;
+    const { data, error } = result;
+
+    console.log("Result:", result);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    console.log("Setting cars");
 
     if (pageNumber === 0) {
-      setCars(data || []);
+      setCars(data);
     } else {
-      setCars(prev => [...prev, ...(data || [])]);
+      setCars(prev => [...prev, ...data]);
     }
 
-    if (!data || data.length < PAGE_SIZE) {
-      setHasMoreCars(false);
-    }
-  } catch (err) {
-    console.error("FETCH ERROR:", err);
+    console.log("Cars set");
+  } catch (e) {
+    console.error("FETCH EXCEPTION", e);
   } finally {
+    console.log("Finally reached");
     isFetchingRef.current = false;
     setLoadingCars(false);
-    console.log("Fetching flag reset");
   }
 };
 const fetchFeaturedCars = async () => {
