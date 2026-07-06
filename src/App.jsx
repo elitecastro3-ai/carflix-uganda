@@ -2199,10 +2199,14 @@ I'm interested — please keep me posted!`;
                       {loadingCars && cars.length === 0 ? (     
                         <CarGridSkeleton count={8} />
                       ) : (
-                        filtered.map(car => (
-                          <CarCard key={car.id} car={car} />
-                        ))
-                        
+                        <>
+                          {filtered.map(car => (
+                            <CarCard key={car.id} car={car} />
+                          ))}
+                          {loadingCars && cars.length > 0 && (
+                            <CarGridSkeleton count={4} />
+                          )}
+                        </>
                       )}
                         </div>
                       )}
@@ -2210,18 +2214,9 @@ I'm interested — please keep me posted!`;
                       <div
                         ref={loaderRef}
                         style={{
-                          height: 40,
-                          display: "flex",
-                          justifyContent: "center",
-                          alignItems: "center",
+                          height: 8,
                         }}
-                      >
-                        {loadingCars && (
-                          <span style={{ color: "#666" }}>
-                            Loading more cars...
-                          </span>
-                        )}
-                      </div>
+                      />
                     )}
                     </div>
 
