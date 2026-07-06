@@ -1672,57 +1672,55 @@ const handleWhatsAppInquiry = async (car) => {
 
   
   const fetchCars = async (pageNumber = 0) => {
+  console.log("========== fetchCars ==========");
+  console.log("Page:", pageNumber);
+  console.log("Before guard:", isFetchingRef.current);
 
-  console.log("fetchCars called", pageNumber);
-
-  if (isFetchingRef.current) return;
+  if (isFetchingRef.current) {
+    console.log("EXIT: already fetching");
+    return;
+  }
 
   isFetchingRef.current = true;
+  console.log("Fetching flag set to TRUE");
+
   setLoadingCars(true);
 
   const from = pageNumber * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  const { data, error } = await supabase
-  .from("cars")
-  .select("*")
-  .order("created_at", { ascending: false })
-  .range(from, to);
+  console.log("Before Supabase query");
 
-  console.log("Supabase returned:", data);
-  console.log("Supabase error:", error);
+  try {
+    const { data, error } = await supabase
+      .from("cars")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
+    console.log("After Supabase query");
+    console.log("Data:", data);
+    console.log("Error:", error);
 
-  if (error) {
-    console.error(error);
+    if (error) throw error;
+
+    if (pageNumber === 0) {
+      setCars(data || []);
+    } else {
+      setCars(prev => [...prev, ...(data || [])]);
+    }
+
+    if (!data || data.length < PAGE_SIZE) {
+      setHasMoreCars(false);
+    }
+  } catch (err) {
+    console.error("FETCH ERROR:", err);
+  } finally {
     isFetchingRef.current = false;
     setLoadingCars(false);
-    return;
+    console.log("Fetching flag reset");
   }
-
-  console.log("Loaded cars:", data);
-
-  if (pageNumber === 0) {
-    setCars(data || []);
-  } else {
-    setCars(prev => [...prev, ...(data || [])]);
-  }
-
-  console.log("Returned:", data.length);
-  console.log("Current page:", pageNumber);
-
-  if (data.length < PAGE_SIZE) {
-    console.log("NO MORE PAGES");
-    setHasMoreCars(false);
-  }
-
-  if (!data || data.length < PAGE_SIZE) {
-    setHasMoreCars(false);
-  }
-  isFetchingRef.current = false;
-  setLoadingCars(false);
 };
-
 const fetchFeaturedCars = async () => {
   const { data, error } = await supabase
     .from("cars")
