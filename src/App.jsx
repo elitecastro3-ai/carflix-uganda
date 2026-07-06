@@ -1683,7 +1683,11 @@ const handleWhatsAppInquiry = async (car) => {
   .order("created_at", { ascending: false })
   .range(from, to);
 
-console.log(result.count);
+  
+
+  const { data, error, count } = result;
+
+  console.log("Total rows:", count);
 
   if (error) {
     console.error(error);
