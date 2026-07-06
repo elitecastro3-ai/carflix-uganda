@@ -1396,9 +1396,7 @@ export default function CarFlixApp() {
 
   const loaderRef = useRef(null);
 
-  const isFetchingRef = useRef(false);
-
-  const observerTriggered = useRef(false);
+  
 
   const [loadingImports, setLoadingImports] = useState(false);
 
@@ -1671,48 +1669,42 @@ const handleWhatsAppInquiry = async (car) => {
 };
 
   
-  const fetchCars = async (pageNumber = 0) => {
-  console.log("FETCH START");
+  const fetchCars = async (pageNumber) => {
+  if (loadingCars || !hasMoreCars) return;
+
+  setLoadingCars(true);
 
   const from = pageNumber * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  try {
-    console.log("Before query");
+  const { data, error } = await supabase
+    .from("cars")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
-    const result = await supabase
-      .from("cars")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .range(from, to);
-
-    console.log("After query");
-
-    const { data, error } = result;
-
-    console.log("Result:", result);
-
-    if (error) {
-      console.error(error);
-      return;
-    }
-
-    console.log("Setting cars");
-
-    if (pageNumber === 0) {
-      setCars(data);
-    } else {
-      setCars(prev => [...prev, ...data]);
-    }
-
-    console.log("Cars set");
-  } catch (e) {
-    console.error("FETCH EXCEPTION", e);
-  } finally {
-    console.log("Finally reached");
-    isFetchingRef.current = false;
+  if (error) {
+    console.error(error);
     setLoadingCars(false);
+    return;
   }
+
+  if (pageNumber === 0) {
+    setCars(data);
+  } else {
+    setCars(prev => [...prev, ...data]);
+  }
+
+  console.log(
+    `Loaded page ${pageNumber}: ${data.length} cars`
+  );
+
+  if (data.length < PAGE_SIZE) {
+    console.log("Reached last page.");
+    setHasMoreCars(false);
+  }
+
+  setLoadingCars(false);
 };
 const fetchFeaturedCars = async () => {
   const { data, error } = await supabase
@@ -1737,45 +1729,49 @@ useEffect(() => {
   if (!loaderRef.current) return;
 
   const observer = new IntersectionObserver(
-  (entries) => {
-    const entry = entries[0];
+    (entries) => {
+      const first = entries[0];
 
-    if (
-      entry.isIntersecting &&
-      hasMoreCars &&
-      !loadingCars &&
-      !observerTriggered.current
-    ) {
-      observerTriggered.current = true;
-      setPage(prev => prev + 1);
-    }
+      if (
+        first.isIntersecting &&
+        !loadingCars &&
+        hasMoreCars
+      ) {
+        console.log("Loading next page:", page + 1);
 
-    if (!entry.isIntersecting) {
-      observerTriggered.current = false;
+        setPage(prev => prev + 1);
+      }
+    },
+    {
+      rootMargin: "300px",
+      threshold: 0,
     }
-  },
-  {
-    threshold: 0.1,
-    rootMargin: "0px",
-  }
-);
+  );
 
   observer.observe(loaderRef.current);
 
   return () => observer.disconnect();
-}, [hasMoreCars, loadingCars]);
-
+}, [loadingCars, hasMoreCars]);
 useEffect(() => {
   fetchFeaturedCars();
 }, []);
 
+useEffect(() => {
+  console.log({
+    page,
+    cars: cars.length,
+    featured: featuredCars.length,
+    loadingCars,
+    hasMoreCars,
+  });
+}, [page, cars, featuredCars, loadingCars, hasMoreCars]);
+
   const openWa = (car = null) => { setWaCarContext(car); setShowWaPicker(true); };
 
-  const refresh = async () => {
+  const refresh = () => {
   setCars([]);
-  setHasMoreCars(true);
   setPage(0);
-
+  setHasMoreCars(true);
 };
 
   const toggleSave = async (carId) => {
