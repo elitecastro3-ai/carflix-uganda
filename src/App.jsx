@@ -1128,30 +1128,7 @@ const PostImportModal = ({ onClose, onSave }) => {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const [currentUser, setCurrentUser] = useState(null);
 
-useEffect(() => {
-  const loadUser = async () => {
-    const { data } = await supabase.auth.getUser();
 
-    if (!data?.user) return;
-
-const { data: profile, error } = await supabase
-  .from("users")
-  .select("*")
-  .eq("id", data.user.id)
-  .single();
-
-if (error) {
-  console.error(error);
-  return;
-}
-
-setCurrentUser(profile);
-
-console.log("PROFILE:", profile);
-  };
-
-  loadUser();
-}, []);
 
   const handleImageUpload = async (e) => {
   const files = Array.from(e.target.files);
@@ -1400,7 +1377,9 @@ export default function CarFlixApp() {
   const [showTerms, setShowTerms] = useState(false);
   const [pendingUser, setPendingUser] = useState(null);
   const [user, setUser] = useState(null);
+  useEffect(() => {
   console.log("CURRENT USER:", user);
+}, [user]);
   const [showAuth, setShowAuth] = useState(false);
   const [tab, setTab] = useState("home");
   const [cars, setCars] = useState([]);
@@ -1517,17 +1496,42 @@ export default function CarFlixApp() {
     return () => { try { document.head.removeChild(link); } catch (_) {} };
   }, []);
 
-  useEffect(() => {
-    const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data?.user) {
-        const { data: profile } = await supabase.from("users").select("*").eq("id", data.user.id).single();
-        console.log("FETCHED PROFILE", profile);
-        setUser(profile);
-      }
-    };
-    getUser();
-  }, []);
+ useEffect(() => {
+  const init = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      const { data: profile } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      setUser(profile);
+    }
+  };
+
+  init();
+
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange(async (_, session) => {
+    if (!session?.user) {
+      setUser(null);
+      return;
+    }
+
+    const { data: profile } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", session.user.id)
+      .single();
+
+    setUser(profile);
+  });
+
+  return () => subscription.unsubscribe();
+}, []);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -1834,12 +1838,7 @@ useEffect(() => {
   const acceptTerms = () => { setShowTerms(false); };
 
   const filtered = cars.filter(c => {
-  console.log("Total cars fetched:", cars.length);
-  console.log("Filtered cars:", filtered.length);
-  console.log(
-    "Featured cars:",
-    cars.filter(c => c.featured).length
-  );
+  
     const q = search.toLowerCase();
     if (q && !c.carName.toLowerCase().includes(q) && !c.brand.toLowerCase().includes(q) && !c.location.toLowerCase().includes(q) && !String(c.price).includes(q)) return false;
     const b = brandFilter !== "All" ? brandFilter : filters.brand !== "All" ? filters.brand : null;
@@ -1851,6 +1850,13 @@ useEffect(() => {
     if (c.featured) return false;
     return true;
   });
+
+  console.log("Total cars fetched:", cars.length);
+  console.log("Filtered cars:", filtered.length);
+  console.log(
+    "Featured cars:",
+    cars.filter(c => c.featured).length
+  ); 
 
   //const featuredCars = cars.filter(car => car.featured);
   const savedCars = cars.filter(c => savedIds.includes(c.id));
@@ -2190,6 +2196,9 @@ I'm interested — please keep me posted!`;
                         filtered.map(car => (
                           <CarCard key={car.id} car={car} />
                         ))
+                        console.log("Cars state:", cars.length);
+                        console.log("Filtered:", filtered.length);
+                        console.log("Featured:", featuredCars.length);
                       )}
                         </div>
                       )}
