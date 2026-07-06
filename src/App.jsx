@@ -1677,11 +1677,13 @@ const handleWhatsAppInquiry = async (car) => {
   const from = pageNumber * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  const { data, error } = await supabase
-    .from("cars")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .range(from, to);
+  const result = await supabase
+  .from("cars")
+  .select("*", { count: "exact" })
+  .order("created_at", { ascending: false })
+  .range(from, to);
+
+console.log(result.count);
 
   if (error) {
     console.error(error);
