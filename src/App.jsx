@@ -1688,6 +1688,11 @@ const handleWhatsAppInquiry = async (car) => {
       .range(from, to);
 
     console.log("Total rows in database:", count);
+    console.log("FETCH RESULT", {
+    count,
+    cars: data?.length,
+    error,
+  });
 
     if (error) {
       console.error(error);
