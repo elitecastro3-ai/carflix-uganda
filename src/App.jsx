@@ -1680,6 +1680,11 @@ const handleWhatsAppInquiry = async (car) => {
 
   
   const fetchCars = async (pageNumber = 0) => {
+    console.log("fetchCars called", {
+    isFetching: isFetchingRef.current,
+    hasMoreCars,
+    pageNumber,
+  });
   if (isFetchingRef.current || !hasMoreCars) return;
 
   isFetchingRef.current = true;
