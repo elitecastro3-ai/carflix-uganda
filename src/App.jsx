@@ -13,6 +13,8 @@ import {
   PillSkeleton,
   ButtonSkeleton
 } from "./Skeletons";
+const CLOUDINARY_CLOUD_NAME = "dcpftkhbn";
+const CLOUDINARY_UPLOAD_PRESET = "carflix";
 // ── MOCK DATA ──────────────────────────────────────────────────────────────────
 const MOCK_CARS = [
   { id: "1", carName: "Noah", brand: "Toyota", price: 45000000, location: "Nakawa", condition: "Used", description: "Well maintained Toyota Noah, 7-seater, fuel efficient. Excellent condition for family use.", images: ["https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=400&q=80"], ownerId: "u1", badge: "New", featured: false },
@@ -989,22 +991,28 @@ const PostCarModal = ({ user, onClose, onSave, carToEdit }) => {
         "KB"
       );
 
-      const fileName = `${Date.now()}-${compressedFile.name}`;
+      const formData = new FormData();
 
-      const { error } = await supabase.storage
-        .from("cars")
-        .upload(fileName, compressedFile);
+      formData.append("file", compressedFile);
+      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
 
-      if (error) {
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error(data);
         setUploading(false);
-        return setErr("Upload failed");
+        return setErr("Image upload failed");
       }
 
-      const { data } = supabase.storage
-        .from("cars")
-        .getPublicUrl(fileName);
-
-      uploadedUrls.push(data.publicUrl);
+      uploadedUrls.push(data.secure_url);
     }
 
     setForm((prev) => ({
