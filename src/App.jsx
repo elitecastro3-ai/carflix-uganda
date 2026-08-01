@@ -1693,13 +1693,15 @@ const handleWhatsAppInquiry = async (car) => {
   const from = pageNumber * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
+  console.log("About to query Supabase...");
+
   try {
     const { data, error, count } = await supabase
       .from("cars")
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(from, to);
-
+    console.log("Supabase query returned");    
     console.log("Total rows in database:", count);
     console.log("FETCH RESULT", {
     count,
