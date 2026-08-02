@@ -1680,37 +1680,49 @@ const handleWhatsAppInquiry = async (car) => {
 
   
   const fetchCars = async (pageNumber = 0) => {
-    console.log("fetchCars called", {
-    isFetching: isFetchingRef.current,
-    hasMoreCars,
-    pageNumber,
-  });
-  if (isFetchingRef.current || !hasMoreCars) return;
+  console.log("1 entered fetchCars", { pageNumber, isFetching: isFetchingRef.current, hasMoreCars });
+
+  if (isFetchingRef.current || !hasMoreCars) {
+    console.log("1a GUARD FIRED — early return", { isFetching: isFetchingRef.current, hasMoreCars });
+    return;
+  }
+
+  console.log("2 guard passed");
 
   isFetchingRef.current = true;
+
+  console.log("3 setting loading");
   setLoadingCars(true);
 
   const from = pageNumber * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  console.log("About to query Supabase...");
+  console.log("4 before supabase query", { from, to });
 
+  let data, error, count;
   try {
-    const { data, error, count } = await supabase
+    console.log("before query");
+    const result = await supabase
       .from("cars")
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(from, to);
-    console.log("Supabase query returned");    
-    console.log("Total rows in database:", count);
-    console.log("FETCH RESULT", {
-    count,
-    cars: data?.length,
-    error,
-  });
+    console.log("after query");
+    data  = result.data;
+    error = result.error;
+    count = result.count;
+  } catch (e) {
+    console.error("QUERY THREW", e);
+  }
 
+  console.log("5 after supabase query");
+  console.log("6 data:", data);
+  console.log("7 error:", error);
+  console.log("7a count:", count);
+
+  try {
     if (error) {
-      console.error(error);
+      console.error("7b supabase returned an error:", error);
       return;
     }
 
@@ -1731,6 +1743,7 @@ const handleWhatsAppInquiry = async (car) => {
   } catch (err) {
     console.error("fetchCars failed:", err);
   } finally {
+    console.log("8 finally");
     isFetchingRef.current = false;
     setLoadingCars(false);
   }
