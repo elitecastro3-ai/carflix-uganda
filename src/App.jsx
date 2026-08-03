@@ -2,6 +2,22 @@ import { useState, useEffect, useRef } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AdminDashboard from "./AdminDashboard";
 import { supabase } from "./supabase";
+(async () => {
+  console.log("===== SIMPLE TEST =====");
+
+  try {
+    const result = await supabase
+      .from("cars")
+      .select("id")
+      .limit(1);
+
+    console.log("TEST RESULT", result);
+  } catch (e) {
+    console.error("TEST FAILED", e);
+  }
+
+  console.log("===== END TEST =====");
+})();
 import { Turnstile } from "@marsidev/react-turnstile";
 import imageCompression from "browser-image-compression";
 import {
