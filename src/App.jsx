@@ -2,22 +2,33 @@ import { useState, useEffect, useRef } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AdminDashboard from "./AdminDashboard";
 import { supabase } from "./supabase";
-(async () => {
-  console.log("===== SIMPLE TEST =====");
+useEffect(() => {
+  async function testSupabase() {
+    console.log("===== SIMPLE TEST =====");
 
-  try {
-    const result = await supabase
-      .from("cars")
-      .select("id")
-      .limit(1);
+    try {
+      console.log("A. before getSession");
 
-    console.log("TEST RESULT", result);
-  } catch (e) {
-    console.error("TEST FAILED", e);
+      const session = await supabase.auth.getSession();
+
+      console.log("B. after getSession", session);
+
+      console.log("C. before simple select");
+
+      const result = await supabase
+        .from("cars")
+        .select("id")
+        .limit(1);
+
+      console.log("D. after simple select", result);
+
+    } catch (e) {
+      console.error("TEST FAILED:", e);
+    }
   }
 
-  console.log("===== END TEST =====");
-})();
+  testSupabase();
+}, []);
 import { Turnstile } from "@marsidev/react-turnstile";
 import imageCompression from "browser-image-compression";
 import {
