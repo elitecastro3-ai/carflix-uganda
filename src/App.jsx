@@ -2,33 +2,42 @@ import { useState, useEffect, useRef } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AdminDashboard from "./AdminDashboard";
 import { supabase } from "./supabase";
-useEffect(() => {
-  async function testSupabase() {
-    console.log("===== SIMPLE TEST =====");
+(async () => {
+  console.log("===== SIMPLE TEST =====");
 
-    try {
-      console.log("A. before getSession");
+  try {
+    const result = await supabase
+      .from("cars")
+      .select("id")
+      .limit(1);
 
-      const session = await supabase.auth.getSession();
-
-      console.log("B. after getSession", session);
-
-      console.log("C. before simple select");
-
-      const result = await supabase
-        .from("cars")
-        .select("id")
-        .limit(1);
-
-      console.log("D. after simple select", result);
-
-    } catch (e) {
-      console.error("TEST FAILED:", e);
-    }
+    console.log("TEST RESULT", result);
+  } catch (e) {
+    console.error("TEST FAILED", e);
   }
 
-  testSupabase();
-}, []);
+  console.log("===== END TEST =====");
+})();
+console.log("===== CAR QUERY DIAGNOSTIC TEST =====");
+
+(async () => {
+  try {
+    console.log("TEST 1: About to query cars directly...");
+
+    const result = await supabase
+      .from("cars")
+      .select("*")
+      .limit(1);
+
+    console.log("TEST 2: Direct cars query returned");
+    console.log("TEST 3: data =", result.data);
+    console.log("TEST 4: error =", result.error);
+    console.log("TEST 5: count =", result.count);
+
+  } catch (err) {
+    console.error("TEST 6: QUERY THREW:", err);
+  }
+})();
 import { Turnstile } from "@marsidev/react-turnstile";
 import imageCompression from "browser-image-compression";
 import {
