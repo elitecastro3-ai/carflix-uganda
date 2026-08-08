@@ -38,6 +38,27 @@ console.log("===== CAR QUERY DIAGNOSTIC TEST =====");
     console.error("TEST 6: QUERY THREW:", err);
   }
 })();
+console.log("===== RAW FETCH TEST =====");
+
+(async () => {
+  try {
+    console.log("RAW TEST 1: Starting direct fetch...");
+
+    const response = await fetch(
+      "https://hcmkruxumytizendywdj.supabase.co/rest/v1/cars?select=*&limit=1"
+    );
+
+    console.log("RAW TEST 2: fetch returned");
+    console.log("RAW TEST 3: HTTP status =", response.status);
+
+    const text = await response.text();
+
+    console.log("RAW TEST 4: response body =", text);
+
+  } catch (err) {
+    console.error("RAW TEST 5: fetch threw =", err);
+  }
+})();
 import { Turnstile } from "@marsidev/react-turnstile";
 import imageCompression from "browser-image-compression";
 import {
